@@ -3813,7 +3813,7 @@ app.post("/v1/test", async (c) => {
 var app_default = app;
 
 // server/vercel-handler.ts
-var vercel_handler_default = getRequestListener((request) => {
+var vercel_handler_default = getRequestListener(async (request) => {
   const url = new URL(request.url);
   const restored = url.searchParams.get("__path");
   if (restored) {
@@ -3822,15 +3822,16 @@ var vercel_handler_default = getRequestListener((request) => {
   } else if (url.pathname === "/api" || url.pathname === "/api/") {
     url.pathname = "/";
   }
-  const init = {
-    method: request.method,
-    headers: request.headers
-  };
-  if (request.method !== "GET" && request.method !== "HEAD") {
-    init.body = request.body;
-    init.duplex = "half";
-  }
-  return app_default.fetch(new Request(url, init));
+  const method = request.method.toUpperCase();
+  const headers = new Headers(request.headers);
+  const body = method === "GET" || method === "HEAD" ? void 0 : await request.text();
+  return app_default.fetch(
+    new Request(url, {
+      method,
+      headers,
+      body: body === void 0 || body.length === 0 ? void 0 : body
+    })
+  );
 });
 export {
   vercel_handler_default as default
