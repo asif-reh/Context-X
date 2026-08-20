@@ -3822,7 +3822,15 @@ var vercel_handler_default = getRequestListener((request) => {
   } else if (url.pathname === "/api" || url.pathname === "/api/") {
     url.pathname = "/";
   }
-  return app_default.fetch(new Request(url, request));
+  const init = {
+    method: request.method,
+    headers: request.headers
+  };
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    init.body = request.body;
+    init.duplex = "half";
+  }
+  return app_default.fetch(new Request(url, init));
 });
 export {
   vercel_handler_default as default

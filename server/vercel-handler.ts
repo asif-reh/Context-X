@@ -14,5 +14,13 @@ export default getRequestListener((request) => {
   } else if (url.pathname === "/api" || url.pathname === "/api/") {
     url.pathname = "/";
   }
-  return app.fetch(new Request(url, request));
+  const init: RequestInit & { duplex?: "half" } = {
+    method: request.method,
+    headers: request.headers,
+  };
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    init.body = request.body;
+    init.duplex = "half";
+  }
+  return app.fetch(new Request(url, init));
 });
