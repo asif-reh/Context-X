@@ -18,9 +18,11 @@ import manifest from "./manifest.config";
  */
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const apiUrl = (
-    env.VITE_CONTEXT_X_API_URL || "http://127.0.0.1:8787"
-  ).replace(/\/$/, "");
+  const fallback =
+    mode === "production"
+      ? "https://context-x-asifrehs-projects.vercel.app/api"
+      : "http://127.0.0.1:8787";
+  const apiUrl = (env.VITE_CONTEXT_X_API_URL || fallback).replace(/\/$/, "");
 
   return {
     plugins: [react(), tailwindcss(), crx({ manifest })],

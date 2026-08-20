@@ -3,6 +3,12 @@
   "framework": null,
   "buildCommand": "echo skip-chrome-extension-build",
   "outputDirectory": "public",
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "{server,src/lib}/**",
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     {
       "source": "/v1/:path*",
@@ -14,3 +20,4 @@
     }
   ]
 }
+
