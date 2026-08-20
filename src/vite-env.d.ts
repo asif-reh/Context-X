@@ -2,7 +2,7 @@
 /// <reference types="chrome" />
 
 interface ImportMetaEnv {
-  readonly VITE_OPENAI_API_KEY?: string;
+  readonly VITE_CONTEXT_X_API_URL?: string;
 }
 
 declare module "*.css?inline" {

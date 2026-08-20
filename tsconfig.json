@@ -19,11 +19,11 @@
     "noImplicitReturns": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "types": ["chrome", "vite/client"],
+    "types": ["chrome", "vite/client", "node"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     }
   },
-  "include": ["src", "manifest.config.ts", "vite.config.ts"]
+  "include": ["src", "server", "manifest.config.ts", "vite.config.ts"]
 }

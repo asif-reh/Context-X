@@ -337,7 +337,9 @@ function ErrorBody({
   const Icon =
     error.code === "NETWORK"
       ? WifiOff
-      : error.code === "TIMEOUT" || error.code === "RATE_LIMIT"
+      : error.code === "TIMEOUT" ||
+          error.code === "RATE_LIMIT" ||
+          error.code === "QUOTA"
         ? Clock
         : needsKey
           ? KeyRound
@@ -345,16 +347,18 @@ function ErrorBody({
 
   const title =
     error.code === "NO_API_KEY"
-      ? "Add an API key"
+      ? "API not ready"
       : error.code === "INVALID_KEY"
         ? "Check your API key"
         : error.code === "NETWORK"
           ? "Connection problem"
           : error.code === "TIMEOUT"
             ? "That took too long"
-            : error.code === "RATE_LIMIT"
-              ? "Please wait a moment"
-              : "Could not explain that";
+            : error.code === "QUOTA"
+              ? "Daily free limit reached"
+              : error.code === "RATE_LIMIT"
+                ? "Please wait a moment"
+                : "Could not explain that";
 
   return (
     <div className="flex flex-col items-start gap-2.5 py-1">

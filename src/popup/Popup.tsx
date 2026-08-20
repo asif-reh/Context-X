@@ -3,6 +3,7 @@ import { Highlighter, Keyboard, Settings, Sparkles } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { fetchHostedHealth } from "@/lib/quota";
 import { shortcutLabel } from "@/lib/shortcut";
 import { hasApiKey } from "@/lib/storage";
 import { subscribeTheme } from "@/lib/theme";
@@ -11,7 +12,13 @@ export function Popup(): JSX.Element {
   const [ready, setReady] = useState<boolean | null>(null);
 
   useEffect(() => {
-    void hasApiKey().then(setReady);
+    void (async () => {
+      if (await hasApiKey()) {
+        setReady(true);
+        return;
+      }
+      setReady(await fetchHostedHealth());
+    })();
     return subscribeTheme(() => undefined);
   }, []);
 
@@ -42,7 +49,7 @@ export function Popup(): JSX.Element {
             </Badge>
           ) : (
             <Badge className="bg-amber-500/15 text-amber-800 dark:text-amber-300">
-              Needs key
+              API offline
             </Badge>
           )}
         </div>
@@ -77,7 +84,7 @@ export function Popup(): JSX.Element {
           }}
         >
           <Settings className="size-3.5" />
-          {ready ? "Settings" : "Add OpenAI API key"}
+          {ready ? "Settings" : "Open settings"}
         </Button>
       </div>
     </div>

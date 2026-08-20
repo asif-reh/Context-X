@@ -2,6 +2,8 @@ import {
   buildExplainSystemPrompt,
   buildFollowUpSystemPrompt,
 } from "./explainPrompt";
+import { getHostedApiUrl, isHostedMode } from "./hosted";
+import { getOrCreateInstallId } from "./installId";
 import { toCompletionUsage, estimateTokensFromText } from "./pricing";
 import type { CompletionUsage, TokenUsage } from "./pricing";
 import { finalizeExplanation, parseExplainMarkdown } from "./parseExplanation";
@@ -52,17 +54,20 @@ function mapStatusToCode(status: number): ExplainErrorCode {
   if (status === 401 || status === 403) return "INVALID_KEY";
   if (status === 429) return "RATE_LIMIT";
   if (status === 408 || status === 504) return "TIMEOUT";
+  if (status === 503) return "NO_API_KEY";
   return "UNKNOWN";
 }
 
 export function messageFor(code: ExplainErrorCode, status?: number): string {
   switch (code) {
     case "NO_API_KEY":
-      return "Add your OpenAI API key in Context-X settings, then try again.";
+      return "Context-X is not ready yet. Open settings, or start the API with npm run server.";
     case "INVALID_KEY":
       return "That API key was not accepted. Open settings and paste a new key from OpenAI.";
     case "RATE_LIMIT":
-      return "OpenAI is busy right now. Wait a few seconds, then tap Retry.";
+      return "The explanation service is busy right now. Wait a few seconds, then tap Retry.";
+    case "QUOTA":
+      return "You've used today's 20 free explanations. Come back tomorrow, or add your own OpenAI key in Settings.";
     case "NETWORK":
       return "Could not reach OpenAI. Check your internet connection, then tap Retry.";
     case "TIMEOUT":
@@ -76,13 +81,49 @@ export function messageFor(code: ExplainErrorCode, status?: number): string {
   }
 }
 
-async function requireApiKey(): Promise<string> {
+type HostedTarget = { mode: "hosted"; baseUrl: string; installId: string };
+type ByokTarget = { mode: "byok"; apiKey: string };
+type RequestTarget = HostedTarget | ByokTarget;
+
+async function resolveTarget(): Promise<RequestTarget> {
   const { openaiApiKey } = await getSettings();
   const key = openaiApiKey.trim();
-  if (!key) {
+  if (key) return { mode: "byok", apiKey: key };
+  if (!isHostedMode()) {
     throw new ExplainError("NO_API_KEY", messageFor("NO_API_KEY"));
   }
-  return key;
+  return {
+    mode: "hosted",
+    baseUrl: getHostedApiUrl(),
+    installId: await getOrCreateInstallId(),
+  };
+}
+
+async function readHostedError(response: Response): Promise<ExplainError> {
+  const fallback = mapStatusToCode(response.status);
+  try {
+    const parsed: unknown = await response.json();
+    if (typeof parsed === "object" && parsed !== null) {
+      const row = parsed as { code?: unknown; message?: unknown };
+      const code =
+        row.code === "QUOTA" ||
+        row.code === "RATE_LIMIT" ||
+        row.code === "NO_API_KEY" ||
+        row.code === "INVALID_KEY" ||
+        row.code === "NETWORK" ||
+        row.code === "BAD_RESPONSE"
+          ? row.code
+          : fallback;
+      const message =
+        typeof row.message === "string" && row.message.trim()
+          ? row.message
+          : messageFor(code, response.status);
+      return new ExplainError(code, message);
+    }
+  } catch {
+    // Not JSON — OpenAI-style error body.
+  }
+  return new ExplainError(fallback, messageFor(fallback, response.status));
 }
 
 type ChatMessage = {
@@ -94,6 +135,66 @@ type ChatMessage = {
  * Stream a chat completion from OpenAI (SSE). Tokens are delivered as they
  * arrive; usage is taken from the final chunk when `include_usage` is set.
  */
+async function streamHostedSse(
+  target: HostedTarget,
+  path: "/v1/explain" | "/v1/follow-up",
+  body: unknown,
+  signal: AbortSignal | undefined,
+  onToken: (token: string) => void,
+): Promise<{ text: string; usage: TokenUsage }> {
+  const timeout = new AbortController();
+  const timer = setTimeout(() => timeout.abort(), REQUEST_TIMEOUT_MS);
+  const combined =
+    signal !== undefined
+      ? AbortSignal.any([signal, timeout.signal])
+      : timeout.signal;
+
+  try {
+    let response: Response;
+    try {
+      response = await fetch(`${target.baseUrl}${path}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Install-Id": target.installId,
+        },
+        body: JSON.stringify(body),
+        signal: combined,
+      });
+    } catch (error) {
+      if (signal?.aborted && !timeout.signal.aborted) throw error;
+      if (timeout.signal.aborted && !signal?.aborted) {
+        throw new ExplainError("TIMEOUT", messageFor("TIMEOUT"));
+      }
+      if (error instanceof DOMException && error.name === "AbortError") {
+        throw error;
+      }
+      throw new ExplainError(
+        "NETWORK",
+        "Could not reach the Context-X API. Start it with npm run server, then try again.",
+      );
+    }
+
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!response.ok || contentType.includes("application/json")) {
+      throw await readHostedError(response);
+    }
+
+    if (!response.body) {
+      throw new ExplainError("NETWORK", messageFor("NETWORK"));
+    }
+
+    return await readSseTokens(response.body, combined, onToken);
+  } catch (error) {
+    if (timeout.signal.aborted && !signal?.aborted) {
+      throw new ExplainError("TIMEOUT", messageFor("TIMEOUT"));
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function streamChatCompletion(
   apiKey: string,
   messages: ChatMessage[],
@@ -280,24 +381,40 @@ export async function streamExplanation(
     onDelta: (explanation: Explanation) => void;
   },
 ): Promise<{ explanation: Explanation; usage: CompletionUsage }> {
-  const apiKey = await requireApiKey();
+  const target = await resolveTarget();
   let raw = "";
 
-  const result = await streamChatCompletion(
-    apiKey,
-    [
-      {
-        role: "system",
-        content: buildExplainSystemPrompt(payload.term, payload.context),
-      },
-      { role: "user", content: "Explain the selected text." },
-    ],
-    options.signal,
-    (token) => {
-      raw += token;
-      options.onDelta(parseExplainMarkdown(raw, payload.term));
-    },
-  );
+  const onToken = (token: string): void => {
+    raw += token;
+    options.onDelta(parseExplainMarkdown(raw, payload.term));
+  };
+
+  const result =
+    target.mode === "hosted"
+      ? await streamHostedSse(
+          target,
+          "/v1/explain",
+          {
+            term: payload.term,
+            context: payload.context,
+            pageTitle: payload.pageTitle,
+            pageUrl: payload.pageUrl,
+          },
+          options.signal,
+          onToken,
+        )
+      : await streamChatCompletion(
+          target.apiKey,
+          [
+            {
+              role: "system",
+              content: buildExplainSystemPrompt(payload.term, payload.context),
+            },
+            { role: "user", content: "Explain the selected text." },
+          ],
+          options.signal,
+          onToken,
+        );
 
   const final = finalizeExplanation(raw, payload.term);
   if (!final.definition.trim()) {
@@ -328,46 +445,104 @@ export async function streamFollowUpAnswer(
     onDelta: (text: string) => void;
   },
 ): Promise<string> {
-  const apiKey = await requireApiKey();
+  const target = await resolveTarget();
   let raw = "";
+  const onToken = (token: string): void => {
+    raw += token;
+    options.onDelta(raw.trim());
+  };
 
-  const priorTurns: ChatMessage[] = history.slice(-MAX_FOLLOW_UPS).flatMap(
-    (turn) => [
-      { role: "user" as const, content: turn.question },
-      { role: "assistant" as const, content: turn.answer },
-    ],
-  );
-
-  await streamChatCompletion(
-    apiKey,
-    [
+  if (target.mode === "hosted") {
+    await streamHostedSse(
+      target,
+      "/v1/follow-up",
       {
-        role: "system",
-        content: buildFollowUpSystemPrompt(
-          payload.term,
-          payload.context,
-          payload.pageTitle,
-          prior.definition,
-          prior.explanation,
-          prior.analogy,
-        ),
+        term: payload.term,
+        context: payload.context,
+        pageTitle: payload.pageTitle,
+        pageUrl: payload.pageUrl,
+        question: question.trim(),
+        prior: {
+          definition: prior.definition,
+          explanation: prior.explanation,
+          analogy: prior.analogy,
+        },
+        history: history.slice(-MAX_FOLLOW_UPS),
       },
-      ...priorTurns,
-      { role: "user", content: question.trim() },
-    ],
-    options.signal,
-    (token) => {
-      raw += token;
-      options.onDelta(raw.trim());
-    },
-    420,
-  );
+      options.signal,
+      onToken,
+    );
+  } else {
+    const priorTurns: ChatMessage[] = history.slice(-MAX_FOLLOW_UPS).flatMap(
+      (turn) => [
+        { role: "user" as const, content: turn.question },
+        { role: "assistant" as const, content: turn.answer },
+      ],
+    );
+
+    await streamChatCompletion(
+      target.apiKey,
+      [
+        {
+          role: "system",
+          content: buildFollowUpSystemPrompt(
+            payload.term,
+            payload.context,
+            payload.pageTitle,
+            prior.definition,
+            prior.explanation,
+            prior.analogy,
+          ),
+        },
+        ...priorTurns,
+        { role: "user", content: question.trim() },
+      ],
+      options.signal,
+      onToken,
+      420,
+    );
+  }
 
   const answer = raw.trim();
   if (!answer) {
     throw new ExplainError("BAD_RESPONSE", messageFor("BAD_RESPONSE"));
   }
   return answer;
+}
+
+/** Ping OpenAI with a user key, or the hosted API when no key is set. */
+export async function testConnection(
+  apiKey: string,
+  model: string,
+): Promise<ExplainResult> {
+  if (apiKey.trim()) {
+    return testApiKey(apiKey, model);
+  }
+  return testHostedApi();
+}
+
+async function testHostedApi(): Promise<ExplainResult> {
+  try {
+    const response = await fetch(`${getHostedApiUrl()}/v1/test`, {
+      method: "POST",
+      headers: { "X-Install-Id": await getOrCreateInstallId() },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+    if (response.ok) {
+      return {
+        ok: true,
+        data: {
+          term: "ok",
+          definition: "ok",
+          explanation: "ok",
+          analogy: "ok",
+        },
+      };
+    }
+    throw await readHostedError(response);
+  } catch (error) {
+    return toFailure(error);
+  }
 }
 
 /** Lightweight ping used by the options page "Test connection" button. */

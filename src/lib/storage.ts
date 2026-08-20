@@ -1,4 +1,5 @@
 import type { OpenAIModel, Settings, ThemePreference } from "./types";
+import { isHostedMode } from "./hosted";
 
 const API_KEY_KEY = "openaiApiKey";
 const MODEL_KEY = "model";
@@ -9,11 +10,6 @@ export const DEFAULT_SETTINGS: Settings = {
   model: "gpt-4o-mini",
   theme: "dark",
 };
-
-function envApiKey(): string {
-  const value = import.meta.env.VITE_OPENAI_API_KEY;
-  return typeof value === "string" ? value.trim() : "";
-}
 
 const MODELS: OpenAIModel[] = ["gpt-4o-mini", "gpt-4o"];
 
@@ -39,7 +35,7 @@ export async function getSettings(): Promise<Settings> {
     openaiApiKey:
       typeof stored[API_KEY_KEY] === "string" && stored[API_KEY_KEY].trim()
         ? stored[API_KEY_KEY].trim()
-        : envApiKey() || DEFAULT_SETTINGS.openaiApiKey,
+        : DEFAULT_SETTINGS.openaiApiKey,
     model: isModel(stored[MODEL_KEY])
       ? stored[MODEL_KEY]
       : DEFAULT_SETTINGS.model,
@@ -64,4 +60,10 @@ export async function saveTheme(theme: ThemePreference): Promise<void> {
 export async function hasApiKey(): Promise<boolean> {
   const { openaiApiKey } = await getSettings();
   return openaiApiKey.length > 0;
+}
+
+/** Hosted Context-X API, or a user-supplied OpenAI key. */
+export async function hasExplainAccess(): Promise<boolean> {
+  if (await hasApiKey()) return true;
+  return isHostedMode();
 }

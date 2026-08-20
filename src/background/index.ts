@@ -17,8 +17,8 @@ import { recordExplanationUsage } from "@/lib/usage";
 /**
  * MV3 service worker.
  *
- * All OpenAI traffic happens here so the API key stays in `chrome.storage.sync`
- * and is never exposed to page JavaScript.
+ * All OpenAI traffic for hosted mode goes to the Context-X API.
+ * Optional BYOK still calls OpenAI from this worker and never from the page.
  */
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === "install") {

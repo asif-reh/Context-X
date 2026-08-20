@@ -13,20 +13,19 @@ import manifest from "./manifest.config";
  * Tailwind is compiled via the Vite plugin so content-script CSS can be
  * inlined into Shadow DOM without leaking onto the host page.
  *
- * `OPENAI_API_KEY` from `.env` is inlined only during `npm run dev`.
- * Production builds never embed the key — users enter it in Settings.
+ * The OpenAI key lives only in server `.env` (`npm run server`).
+ * The extension never embeds it. Optional BYOK still works from Settings.
  */
-export default defineConfig(({ command, mode }) => {
+export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const openaiApiKey =
-    command === "serve"
-      ? (env.OPENAI_API_KEY || env.VITE_OPENAI_API_KEY || "").trim()
-      : "";
+  const apiUrl = (
+    env.VITE_CONTEXT_X_API_URL || "http://127.0.0.1:8787"
+  ).replace(/\/$/, "");
 
   return {
     plugins: [react(), tailwindcss(), crx({ manifest })],
     define: {
-      "import.meta.env.VITE_OPENAI_API_KEY": JSON.stringify(openaiApiKey),
+      "import.meta.env.VITE_CONTEXT_X_API_URL": JSON.stringify(apiUrl),
     },
     resolve: {
       alias: {

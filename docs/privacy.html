@@ -40,45 +40,47 @@
       <p class="meta">Last updated: 20 August 2026</p>
       <p>
         Context-X is a Chrome extension that explains highlighted text using OpenAI.
-        This policy describes what the extension handles. It is written for users and
-        for Chrome Web Store review.
+        This policy describes what the extension and the Context-X API handle. It is
+        written for users and for Chrome Web Store review.
       </p>
 
       <h2>What Context-X stores</h2>
       <ul>
-        <li><strong>OpenAI API key</strong> in <code>chrome.storage.sync</code> (your Chrome profile, optionally synced across your devices).</li>
+        <li><strong>Anonymous install id</strong> in <code>chrome.storage.local</code> (this browser only). Used to enforce the free daily limit.</li>
         <li><strong>Theme preference</strong> (light or dark) in <code>chrome.storage.sync</code>.</li>
-        <li><strong>Onboarding completion</strong> and <strong>monthly usage estimates</strong> in <code>chrome.storage.local</code> (this browser only).</li>
+        <li><strong>Onboarding completion</strong> and <strong>monthly usage estimates</strong> in <code>chrome.storage.local</code>.</li>
+        <li><strong>Optional OpenAI API key</strong> in <code>chrome.storage.sync</code> only if you choose to paste your own key.</li>
       </ul>
-      <p>Nothing is stored on a Context-X server. The extension currently has no backend.</p>
+      <p>The OpenAI key used for the free hosted plan lives on the Context-X server. It is not stored in the extension.</p>
 
       <h2>What is sent to third parties</h2>
       <p>
-        When you click <strong>Explain</strong> (or use the shortcut), the background worker
-        sends the selected term, a short window of nearby page text, the page title, and
-        the page URL to <strong>OpenAI</strong> (<code>https://api.openai.com</code>) so the
-        model can write a context-aware explanation.
+        When you click <strong>Explain</strong> (or use the shortcut) in hosted mode, the
+        background worker sends the selected term, a short window of nearby page text,
+        the page title, and the page URL to the <strong>Context-X API</strong>. The API then
+        sends that prompt to <strong>OpenAI</strong> (<code>https://api.openai.com</code>).
       </p>
       <p>
-        That request uses <strong>your</strong> API key. OpenAI’s handling of the prompt is
-        governed by
+        If you paste your own OpenAI key in Settings, the extension sends that request
+        <strong>directly to OpenAI</strong> and does not use the Context-X API for explanations.
+        OpenAI’s handling of the prompt is governed by
         <a href="https://openai.com/policies/privacy-policy">OpenAI’s privacy policy</a>.
       </p>
-      <p>The key is not sent to any other host. Page JavaScript cannot read it.</p>
+      <p>Page JavaScript cannot read your key or the install id from extension storage.</p>
 
       <h2>What Context-X does not do</h2>
       <ul>
         <li>It does not sell or rent personal data</li>
         <li>It does not run ads or analytics SDKs</li>
         <li>It does not collect accounts, emails, or browsing history beyond the current explanation request</li>
-        <li>It does not persist page content after the request finishes</li>
+        <li>It does not persist page content after the request finishes, other than a short local usage preview in Settings</li>
       </ul>
 
       <h2>Permissions</h2>
       <ul>
-        <li><strong>storage</strong> — save the API key, theme, and local usage</li>
+        <li><strong>storage</strong> — save theme, optional API key, install id, and local usage</li>
         <li><strong>clipboardWrite</strong> — copy an explanation when you choose Copy</li>
-        <li><strong>Host access to api.openai.com</strong> — the only network destination for explanations</li>
+        <li><strong>Host access to the Context-X API and api.openai.com</strong> — network destinations for explanations</li>
       </ul>
       <p>
         A content script runs on <code>http</code> and <code>https</code> pages so the overlay
@@ -87,15 +89,15 @@
 
       <h2>Your choices</h2>
       <ul>
-        <li>Remove or replace the API key in Settings at any time</li>
+        <li>Add, remove, or replace an OpenAI API key in Settings at any time</li>
         <li>Uninstall the extension to delete its <code>chrome.storage</code> data for this profile</li>
         <li>Disable the extension to stop all overlay and network activity</li>
       </ul>
 
       <h2>Contact</h2>
       <p>
-        If you publish Context-X, replace this paragraph with a support email.
-        Until then, contact the maintainer through the project repository.
+        Contact the maintainer through the project repository:
+        <a href="https://github.com/asif-reh/Context-X">github.com/asif-reh/Context-X</a>.
       </p>
       <hr />
       <p class="meta">Context-X · Chrome extension</p>

@@ -4,7 +4,7 @@ Context-X is a Chrome extension that explains technical terms **in the context o
 
 Highlight a word or short phrase — *throughput*, *goroutine*, *idempotent* — and Context-X returns a short definition, a page-aware explanation, and an analogy. It is not a generic dictionary lookup.
 
-The API key never enters the page. OpenAI calls run in the background service worker.
+The key never enters the page. Hosted explanations go through the Context-X API; optional BYOK calls OpenAI from the background worker.
 
 ## Current features
 
@@ -13,19 +13,32 @@ The API key never enters the page. OpenAI calls run in the background service wo
 - Page-aware prompt (nearby sentences or a small window of code)
 - Streaming overlay: definition, context, analogy
 - Follow-up questions in the same popup (with quick actions)
-- First-run onboarding that walks through setup and the API key
-- Options page: key, model (`gpt-4o-mini` / `gpt-4o`), dark mode, monthly usage
-- Retry and plain-language errors for missing keys, network, timeout, and rate limits
+- Hosted API: users do not paste an OpenAI key (20 free explains / day)
+- Optional BYOK in Settings for unlimited use
+- First-run onboarding
+- Options page: hosted status, optional key, model, dark mode, usage
 - Overlay lives in Shadow DOM so host-page CSS cannot restyle it
 
 ## Install (Load unpacked)
 
-You load the **built** extension from `dist/`, not the repository root.
+You load the **built** extension from `dist/`, not the repository root. Run the **API and the extension** together.
 
 ```bash
-git clone <your-repo-url> Context-X
+git clone https://github.com/asif-reh/Context-X.git
 cd Context-X
 npm install
+cp .env.example .env   # then paste OPENAI_API_KEY in .env — server only
+```
+
+Terminal 1 — API (holds the OpenAI key):
+
+```bash
+npm run server
+```
+
+Terminal 2 — extension:
+
+```bash
 npm run build
 ```
 
@@ -37,31 +50,16 @@ Then in Chrome:
 4. Select the `dist/` folder inside this project
 5. Pin Context-X from the puzzle-piece menu if you want the toolbar icon visible
 
-While developing, use `npm run dev` instead of `npm run build`. CRXJS still writes to `dist/` and supports live reload. After a rebuild, click **Reload** on the extension card if the overlay does not update.
+While developing, use `npm run dev` instead of `npm run build`. Keep `npm run server` running. After a rebuild, click **Reload** on the extension card if the overlay does not update.
 
-## Get an OpenAI API key
+The OpenAI key in `.env` is read **only** by `npm run server`. It is never written into `dist/`.
 
-1. Create an account at [platform.openai.com](https://platform.openai.com/)
-2. Open [API keys](https://platform.openai.com/api-keys)
-3. Create a secret key and copy it (it starts with `sk-`)
-4. Install Context-X, then paste the key in the welcome screen or **Settings**
-5. Optionally click **Test connection**
+## Optional: your own OpenAI key
 
-The key is stored in `chrome.storage.sync` (your Chrome profile) and is sent only to `https://api.openai.com` from the background worker.
+Hosted mode is the default. If you want to skip the daily cap, paste a key in **Settings**. That key stays in your Chrome profile and is sent only to `https://api.openai.com`.
 
-For local development you can also put the key in a gitignored `.env` file. That file is used only by `npm run dev`. Production builds (`npm run build`) never embed the key — paste it in Settings before you zip `dist/` for the store.
-
-```bash
-cp .env.example .env
-```
-
-```
-OPENAI_API_KEY=sk-your-key-here
-```
-
-Restart `npm run dev` after changing `.env`. A key saved in Settings still takes priority.
-
-You need an OpenAI account with billing enabled. Context-X uses `gpt-4o-mini` by default, which is inexpensive for short explanations.
+Public privacy policy: https://asif-reh.github.io/Context-X/privacy.html
+Landing page: https://asif-reh.github.io/Context-X/
 
 ## How to use
 
@@ -74,11 +72,12 @@ You need an OpenAI account with billing enabled. Context-X uses `gpt-4o-mini` by
 
 ```
 Context-X/
+├── server/                  # Hosted API — OpenAI key stays here
 ├── manifest.config.ts       # MV3 manifest (source of truth)
 ├── vite.config.ts
 ├── public/icons/            # 16 / 32 / 48 / 128 toolbar icons
 └── src/
-    ├── background/          # Service worker — OpenAI calls live here
+    ├── background/          # Service worker — talks to the API or OpenAI
     ├── content/             # Selection overlay (Shadow DOM)
     ├── popup/               # Toolbar popup
     ├── options/             # Welcome flow + settings
@@ -92,28 +91,34 @@ Context-X/
 
 | Command | Purpose |
 | --- | --- |
+| `npm run server` | Hosted API on http://127.0.0.1:8787 (reads `.env`) |
+| `npm run start` | Same API without `--env-file` (cloud hosts inject env) |
 | `npm run dev` | Development build into `dist/` with live reload |
 | `npm run build` | Typecheck and production bundle into `dist/` |
 | `npm run typecheck` | `tsc --noEmit` |
 
 ## Privacy
 
-- The API key stays in your Chrome profile (`chrome.storage.sync`)
-- Selected text and nearby context are sent to OpenAI only for the current request
+- The hosted OpenAI key stays in server `.env`, never in the extension zip
+- Selected text and nearby context go to the Context-X API, then OpenAI
+- Optional BYOK stays in your Chrome profile and is sent only to OpenAI
 - Usage totals stay in this browser (`chrome.storage.local`)
-- Context-X does not operate a backend and does not sell data
 
 Public privacy policy (Chrome Web Store URL):
+
+https://asif-reh.github.io/Context-X/privacy.html
+
+Landing page:
 
 https://asif-reh.github.io/Context-X/
 
 ## Roadmap
 
+- Auth + Stripe for Pro (unlimited explains)
+- Chrome Web Store publish after the hosted API is live
 - Firefox / Edge store packages
-- Optional local or non-OpenAI models
 - Better support for PDFs and more same-origin documents
 - Caching repeated terms on the same page
-- Team / shared key support
 - i18n for the overlay and settings
 
 ## License

@@ -57,6 +57,7 @@ export type ExplainErrorCode =
   | "NO_API_KEY"
   | "INVALID_KEY"
   | "RATE_LIMIT"
+  | "QUOTA"
   | "NETWORK"
   | "TIMEOUT"
   | "BAD_RESPONSE"

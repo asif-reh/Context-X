@@ -1,24 +1,41 @@
 import { defineManifest } from "@crxjs/vite-plugin";
+import { DEFAULT_API_ORIGIN } from "./src/lib/limits";
+
+function apiHostPermissions(): string[] {
+  const raw = process.env.VITE_CONTEXT_X_API_URL || DEFAULT_API_ORIGIN;
+  let origin = DEFAULT_API_ORIGIN;
+  try {
+    origin = new URL(raw).origin;
+  } catch {
+    origin = DEFAULT_API_ORIGIN;
+  }
+  return [
+    ...new Set([
+      "https://api.openai.com/*",
+      `${origin}/*`,
+      "http://127.0.0.1:8787/*",
+      "http://localhost:8787/*",
+    ]),
+  ];
+}
 
 /**
  * Chrome Manifest V3 — CRXJS compiles this into dist/manifest.json.
  *
  * Permissions (keep this list minimal for Web Store review):
- * - storage: API key, theme, and local usage history
+ * - storage: theme, optional BYOK key, local usage
  * - clipboardWrite: copy explanation from the overlay
- * - host_permissions openai: the background worker is the only caller
- *
- * Icon paths are relative to `public/` (Vite copies that folder to dist root).
+ * - host_permissions: OpenAI (BYOK) and the Context-X API (hosted)
  */
 export default defineManifest({
   manifest_version: 3,
   name: "Context-X",
   short_name: "Context-X",
-  version: "1.0.0",
+  version: "1.1.0",
   description:
     "Highlight any term on the web and get a page-aware AI explanation — definition, context, and analogy in one click.",
   permissions: ["storage", "clipboardWrite"],
-  host_permissions: ["https://api.openai.com/*"],
+  host_permissions: apiHostPermissions(),
   background: {
     service_worker: "src/background/index.ts",
     type: "module",

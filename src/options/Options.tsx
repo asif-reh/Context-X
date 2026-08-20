@@ -23,9 +23,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { testApiKey } from "@/lib/openai";
+import { testConnection } from "@/lib/openai";
 import { shortcutLabel } from "@/lib/shortcut";
 import { getOnboardingComplete } from "@/lib/onboarding";
+import { DAILY_EXPLAIN_LIMIT } from "@/lib/limits";
+import { fetchHostedHealth } from "@/lib/quota";
 import { DEFAULT_SETTINGS, getSettings, saveSettings, saveTheme } from "@/lib/storage";
 import { applyTheme, subscribeTheme } from "@/lib/theme";
 import { Onboarding } from "./Onboarding";
@@ -45,13 +47,15 @@ export function Options(): JSX.Element {
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
   const [showKey, setShowKey] = useState(false);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [hostedUp, setHostedUp] = useState<boolean | null>(null);
 
   useEffect(() => {
-    void Promise.all([getSettings(), getOnboardingComplete()]).then(
-      ([value, complete]) => {
+    void Promise.all([getSettings(), getOnboardingComplete(), fetchHostedHealth()]).then(
+      ([value, complete, health]) => {
         setSettings(value);
         applyTheme(value.theme);
         setOnboarded(complete);
+        setHostedUp(health);
         setLoaded(true);
       },
     );
@@ -74,7 +78,7 @@ export function Options(): JSX.Element {
 
   async function handleTest(): Promise<void> {
     setStatus({ kind: "testing" });
-    const result = await testApiKey(settings.openaiApiKey, settings.model);
+    const result = await testConnection(settings.openaiApiKey, settings.model);
     if (result.ok) {
       setStatus({ kind: "ok", message: "Connection succeeded." });
       return;
@@ -155,9 +159,30 @@ export function Options(): JSX.Element {
 
         <Card className="mt-5 gap-5 py-5">
           <CardHeader className="px-5">
-            <CardTitle className="text-[15px]">OpenAI access</CardTitle>
+            <CardTitle className="text-[15px]">Hosted explanations</CardTitle>
             <CardDescription>
-              Paste a secret key from{" "}
+              {hostedUp
+                ? `The Context-X API is running. You get ${DAILY_EXPLAIN_LIMIT} free explanations per day — no OpenAI key required.`
+                : `Start the API with npm run server so anyone can use Context-X without pasting a key. ${DAILY_EXPLAIN_LIMIT} free explanations per day.`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-5">
+            <p className="text-sm text-muted-foreground">
+              {hostedUp === null
+                ? "Checking API…"
+                : hostedUp
+                  ? "Status: connected"
+                  : "Status: API offline — run npm run server in the project folder."}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-5 gap-5 py-5">
+          <CardHeader className="px-5">
+            <CardTitle className="text-[15px]">Your own OpenAI key (optional)</CardTitle>
+            <CardDescription>
+              Skip the daily cap by using your key. It stays in your Chrome
+              profile and is sent only to OpenAI. Get one from{" "}
               <a
                 className="text-primary underline-offset-4 hover:underline"
                 href="https://platform.openai.com/api-keys"
@@ -166,8 +191,7 @@ export function Options(): JSX.Element {
               >
                 platform.openai.com/api-keys
               </a>
-              . It stays in your Chrome profile and is sent only to OpenAI from
-              the background worker.
+              .
             </CardDescription>
           </CardHeader>
 
@@ -304,9 +328,10 @@ export function Options(): JSX.Element {
         <div className="mt-8 flex gap-3 text-sm text-muted-foreground">
           <Shield className="mt-0.5 size-4 shrink-0" />
           <p>
-            Your API key is sent only to{" "}
-            <span className="text-foreground">api.openai.com</span>. Usage
-            history stays in this browser. Shortcut: {keys}.
+            Your OpenAI key, if you add one, is sent only to{" "}
+            <span className="text-foreground">api.openai.com</span>. Hosted mode
+            sends the highlight to the Context-X API, then OpenAI. Shortcut:{" "}
+            {keys}.
           </p>
         </div>
       </div>

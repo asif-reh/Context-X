@@ -1,22 +1,10 @@
-import { useState, type FormEvent, type JSX } from "react";
-import {
-  Check,
-  ChevronRight,
-  Eye,
-  EyeOff,
-  Highlighter,
-  Keyboard,
-  LoaderCircle,
-  Sparkles,
-} from "lucide-react";
+import { useState, type JSX } from "react";
+import { Check, ChevronRight, Highlighter, Keyboard, Sparkles } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { DAILY_EXPLAIN_LIMIT } from "@/lib/limits";
 import { setOnboardingComplete } from "@/lib/onboarding";
-import { testApiKey } from "@/lib/openai";
 import { shortcutLabel } from "@/lib/shortcut";
-import { saveSettings } from "@/lib/storage";
 import type { Settings } from "@/lib/types";
 
 interface OnboardingProps {
@@ -31,39 +19,11 @@ export function Onboarding({
   onComplete,
 }: OnboardingProps): JSX.Element {
   const [step, setStep] = useState<Step>(0);
-  const [apiKey, setApiKey] = useState(settings.openaiApiKey);
-  const [showKey, setShowKey] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const keys = shortcutLabel();
 
-  async function finish(next: Settings): Promise<void> {
+  async function finish(): Promise<void> {
     await setOnboardingComplete();
-    onComplete(next);
-  }
-
-  async function handleSaveKey(event: FormEvent): Promise<void> {
-    event.preventDefault();
-    const key = apiKey.trim();
-    if (!key) {
-      setError("Paste your OpenAI API key to continue, or skip for now.");
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    const next = { ...settings, openaiApiKey: key };
-    await saveSettings(next);
-    const result = await testApiKey(key, settings.model);
-    setBusy(false);
-    if (!result.ok) {
-      setError(result.message);
-      return;
-    }
-    await finish(next);
-  }
-
-  async function handleSkip(): Promise<void> {
-    await finish(settings);
+    onComplete(settings);
   }
 
   return (
@@ -81,16 +41,7 @@ export function Onboarding({
             <ExampleStep shortcut={keys} onNext={() => setStep(2)} />
           ) : null}
           {step === 2 ? (
-            <KeyStep
-              apiKey={apiKey}
-              showKey={showKey}
-              busy={busy}
-              error={error}
-              onApiKeyChange={setApiKey}
-              onToggleShow={() => setShowKey((value) => !value)}
-              onSubmit={(event) => void handleSaveKey(event)}
-              onSkip={() => void handleSkip()}
-            />
+            <ReadyStep onFinish={() => void finish()} />
           ) : null}
         </div>
 
@@ -171,7 +122,7 @@ function ExampleStep({
       </ol>
 
       <Button type="button" className="mt-6 w-full" onClick={onNext}>
-        Add your API key
+        Continue
         <ChevronRight className="size-4" />
       </Button>
     </div>
@@ -235,87 +186,19 @@ function ExamplePreview({ shortcut }: { shortcut: string }): JSX.Element {
   );
 }
 
-function KeyStep({
-  apiKey,
-  showKey,
-  busy,
-  error,
-  onApiKeyChange,
-  onToggleShow,
-  onSubmit,
-  onSkip,
-}: {
-  apiKey: string;
-  showKey: boolean;
-  busy: boolean;
-  error: string | null;
-  onApiKeyChange: (value: string) => void;
-  onToggleShow: () => void;
-  onSubmit: (event: FormEvent) => void;
-  onSkip: () => void;
-}): JSX.Element {
+function ReadyStep({ onFinish }: { onFinish: () => void }): JSX.Element {
   return (
-    <form onSubmit={onSubmit}>
-      <h1 className="text-xl font-semibold tracking-tight">Add your OpenAI key</h1>
+    <div>
+      <h1 className="text-xl font-semibold tracking-tight">You're ready</h1>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-        Context-X calls OpenAI from the background worker. The key stays in your
-        Chrome profile and is never sent to us. Get one from{" "}
-        <a
-          className="text-primary underline-offset-4 hover:underline"
-          href="https://platform.openai.com/api-keys"
-          target="_blank"
-          rel="noreferrer"
-        >
-          platform.openai.com/api-keys
-        </a>
-        .
+        Context-X includes {DAILY_EXPLAIN_LIMIT} free explanations per day. Open
+        any article, highlight a term, and click Explain. You can add your own
+        OpenAI key later in Settings if you want unlimited use.
       </p>
-
-      <div className="mt-5 space-y-2">
-        <Label htmlFor="onboarding-key">API key</Label>
-        <div className="relative">
-          <Input
-            id="onboarding-key"
-            autoComplete="off"
-            spellCheck={false}
-            disabled={busy}
-            type={showKey ? "text" : "password"}
-            placeholder="sk-..."
-            value={apiKey}
-            onChange={(event) => onApiKeyChange(event.target.value)}
-            className="pr-10 font-mono"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="absolute top-1 right-1 text-muted-foreground"
-            onClick={onToggleShow}
-            aria-label={showKey ? "Hide API key" : "Show API key"}
-          >
-            {showKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-          </Button>
-        </div>
-      </div>
-
-      {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
-
-      <Button type="submit" className="mt-6 w-full" disabled={busy}>
-        {busy ? (
-          <LoaderCircle className="size-4 animate-spin" />
-        ) : (
-          <Check className="size-4" />
-        )}
-        {busy ? "Checking key" : "Save and continue"}
+      <Button type="button" className="mt-6 w-full" onClick={onFinish}>
+        <Check className="size-4" />
+        Start explaining
       </Button>
-      <button
-        type="button"
-        onClick={onSkip}
-        disabled={busy}
-        className="mt-3 w-full text-center text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
-      >
-        I’ll add this later
-      </button>
-    </form>
+    </div>
   );
 }

@@ -7,6 +7,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatUsd } from "@/lib/pricing";
+import { fetchHostedQuota } from "@/lib/quota";
+import { DAILY_EXPLAIN_LIMIT } from "@/lib/limits";
 import {
   getUsageRecords,
   summarizeUsage,
@@ -31,14 +33,27 @@ function formatRelative(timestamp: number, now: number): string {
 
 export function UsageSection(): JSX.Element {
   const [summary, setSummary] = useState<UsageSummary | null>(null);
+  const [quota, setQuota] = useState<{ used: number; limit: number } | null>(
+    null,
+  );
   const [now] = useState(() => Date.now());
 
   useEffect(() => {
     let cancelled = false;
 
     async function load(): Promise<void> {
-      const records = await getUsageRecords();
-      if (!cancelled) setSummary(summarizeUsage(records, Date.now()));
+      const [records, hosted] = await Promise.all([
+        getUsageRecords(),
+        fetchHostedQuota(),
+      ]);
+      if (!cancelled) {
+        setSummary(summarizeUsage(records, Date.now()));
+        setQuota(
+          hosted
+            ? { used: hosted.used, limit: hosted.limit }
+            : null,
+        );
+      }
     }
 
     void load();
@@ -73,8 +88,11 @@ export function UsageSection(): JSX.Element {
       <CardHeader className="px-5">
         <CardTitle className="text-[15px]">This month</CardTitle>
         <CardDescription>
-          {stats.monthLabel} · estimated from gpt-4o-mini rates, stored only on
-          this device.
+            {stats.monthLabel} · estimated from gpt-4o-mini rates, stored only on
+            this device.
+            {quota
+              ? ` Free plan today: ${quota.used} / ${quota.limit}.`
+              : ` Free plan: ${DAILY_EXPLAIN_LIMIT} / day when the API is running.`}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 px-5">
