@@ -1,11 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "echo skip-chrome-extension-build",
   "outputDirectory": "public",
   "functions": {
-    "api/index.ts": {
-      "includeFiles": "{server,src/lib}/**",
+    "api/index.js": {
       "maxDuration": 30
     }
   },
@@ -20,4 +18,3 @@
     }
   ]
 }
-

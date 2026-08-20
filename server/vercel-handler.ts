@@ -1,9 +1,9 @@
 import { getRequestListener } from "@hono/node-server";
-import app from "../server/app";
+import app from "./app";
 
 /**
- * Classic Vercel Node functions pass IncomingMessage, not a Web Request.
- * Hono's vercel `handle()` expects fetch Request, which crashes here.
+ * Bundled into api/index.js for Vercel. Classic Node functions use
+ * IncomingMessage; getRequestListener adapts them to fetch().
  */
 export default getRequestListener((request) => {
   const url = new URL(request.url);

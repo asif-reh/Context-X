@@ -9,7 +9,8 @@
     "server": "tsx --env-file=.env server/index.ts",
     "start": "tsx server/index.ts",
     "build": "tsc --noEmit && vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "vercel-build": "esbuild server/vercel-handler.ts --bundle --platform=node --format=esm --outfile=api/index.js"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
@@ -18,6 +19,7 @@
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "esbuild": "^0.25.12",
     "hono": "^4.13.3",
     "lucide-react": "^0.544.0",
     "react": "^18.3.1",
