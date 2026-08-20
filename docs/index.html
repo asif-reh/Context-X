@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy policy — Context-X</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #0f172a;
+        --muted: #475569;
+        --line: #e2e8f0;
+        --bg: #f8fafc;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 48px 24px 80px;
+      }
+      h1 { font-size: 2rem; letter-spacing: -0.03em; margin: 0 0 8px; }
+      h2 { font-size: 1.15rem; margin: 32px 0 8px; }
+      p, li { color: var(--muted); }
+      ul { padding-left: 1.2rem; }
+      a { color: #2563eb; }
+      .meta { font-size: 0.9rem; color: #64748b; }
+      hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Privacy policy — Context-X</h1>
+      <p class="meta">Last updated: 20 August 2026</p>
+      <p>
+        Context-X is a Chrome extension that explains highlighted text using OpenAI.
+        This policy describes what the extension handles. It is written for users and
+        for Chrome Web Store review.
+      </p>
+
+      <h2>What Context-X stores</h2>
+      <ul>
+        <li><strong>OpenAI API key</strong> in <code>chrome.storage.sync</code> (your Chrome profile, optionally synced across your devices).</li>
+        <li><strong>Theme preference</strong> (light or dark) in <code>chrome.storage.sync</code>.</li>
+        <li><strong>Onboarding completion</strong> and <strong>monthly usage estimates</strong> in <code>chrome.storage.local</code> (this browser only).</li>
+      </ul>
+      <p>Nothing is stored on a Context-X server. The extension currently has no backend.</p>
+
+      <h2>What is sent to third parties</h2>
+      <p>
+        When you click <strong>Explain</strong> (or use the shortcut), the background worker
+        sends the selected term, a short window of nearby page text, the page title, and
+        the page URL to <strong>OpenAI</strong> (<code>https://api.openai.com</code>) so the
+        model can write a context-aware explanation.
+      </p>
+      <p>
+        That request uses <strong>your</strong> API key. OpenAI’s handling of the prompt is
+        governed by
+        <a href="https://openai.com/policies/privacy-policy">OpenAI’s privacy policy</a>.
+      </p>
+      <p>The key is not sent to any other host. Page JavaScript cannot read it.</p>
+
+      <h2>What Context-X does not do</h2>
+      <ul>
+        <li>It does not sell or rent personal data</li>
+        <li>It does not run ads or analytics SDKs</li>
+        <li>It does not collect accounts, emails, or browsing history beyond the current explanation request</li>
+        <li>It does not persist page content after the request finishes</li>
+      </ul>
+
+      <h2>Permissions</h2>
+      <ul>
+        <li><strong>storage</strong> — save the API key, theme, and local usage</li>
+        <li><strong>clipboardWrite</strong> — copy an explanation when you choose Copy</li>
+        <li><strong>Host access to api.openai.com</strong> — the only network destination for explanations</li>
+      </ul>
+      <p>
+        A content script runs on <code>http</code> and <code>https</code> pages so the overlay
+        can appear next to your selection. It does not scrape the page in the background.
+      </p>
+
+      <h2>Your choices</h2>
+      <ul>
+        <li>Remove or replace the API key in Settings at any time</li>
+        <li>Uninstall the extension to delete its <code>chrome.storage</code> data for this profile</li>
+        <li>Disable the extension to stop all overlay and network activity</li>
+      </ul>
+
+      <h2>Contact</h2>
+      <p>
+        If you publish Context-X, replace this paragraph with a support email.
+        Until then, contact the maintainer through the project repository.
+      </p>
+      <hr />
+      <p class="meta">Context-X · Chrome extension</p>
+    </main>
+  </body>
+</html>

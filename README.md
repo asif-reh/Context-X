@@ -103,7 +103,9 @@ Context-X/
 - Usage totals stay in this browser (`chrome.storage.local`)
 - Context-X does not operate a backend and does not sell data
 
-See [PRIVACY.md](./PRIVACY.md) if you need a policy page for the Chrome Web Store.
+Public privacy policy (Chrome Web Store URL):
+
+https://asif-reh.github.io/Context-X/
 
 ## Roadmap
 
