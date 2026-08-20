@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Context-X API</title>
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        background: #09090f;
+        color: #f4f4f8;
+        display: grid;
+        place-items: center;
+      }
+      main {
+        width: min(440px, calc(100% - 32px));
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 28px 24px;
+        background: #12121a;
+      }
+      h1 { margin: 0 0 8px; font-size: 1.25rem; letter-spacing: -0.03em; }
+      p { color: #a1a1b5; line-height: 1.5; }
+      .ok { color: #6ee7b7; }
+      .bad { color: #fca5a5; }
+      a { color: #c4b5fd; }
+      code { font-size: 0.85rem; color: #e4e4ef; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Context-X API</h1>
+      <p id="status">Checking health…</p>
+      <p>
+        This is the backend, not the Chrome extension. The product site is
+        <a href="https://asif-reh.github.io/Context-X/">asif-reh.github.io/Context-X</a>.
+      </p>
+      <p>Health: <code>/v1/health</code></p>
+    </main>
+    <script>
+      fetch("/v1/health")
+        .then((r) => r.json())
+        .then((data) => {
+          const el = document.getElementById("status");
+          if (data.ok) {
+            el.className = "ok";
+            el.textContent = "OpenAI key is loaded. Hosted explanations are on.";
+          } else {
+            el.className = "bad";
+            el.textContent =
+              "API is up, but OPENAI_API_KEY is missing on this deployment. Add it in Vercel → Settings → Environment Variables, then Redeploy.";
+          }
+        })
+        .catch(() => {
+          const el = document.getElementById("status");
+          el.className = "bad";
+          el.textContent = "Could not reach /v1/health.";
+        });
+    </script>
+  </body>
+</html>
