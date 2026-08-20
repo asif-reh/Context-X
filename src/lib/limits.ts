@@ -9,4 +9,6 @@ export const MAX_URL_CHARS = 2_000;
 export const MAX_QUESTION_CHARS = 500;
 
 export const DEFAULT_API_ORIGIN = "http://127.0.0.1:8787";
+export const PRODUCTION_API_ORIGIN =
+  "https://context-x-asifrehs-projects.vercel.app";
 export const DEFAULT_API_PORT = 8787;

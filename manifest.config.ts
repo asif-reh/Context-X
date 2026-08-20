@@ -1,5 +1,5 @@
 import { defineManifest } from "@crxjs/vite-plugin";
-import { DEFAULT_API_ORIGIN } from "./src/lib/limits";
+import { DEFAULT_API_ORIGIN, PRODUCTION_API_ORIGIN } from "./src/lib/limits";
 
 function apiHostPermissions(): string[] {
   const raw = process.env.VITE_CONTEXT_X_API_URL || DEFAULT_API_ORIGIN;
@@ -13,6 +13,7 @@ function apiHostPermissions(): string[] {
     ...new Set([
       "https://api.openai.com/*",
       `${origin}/*`,
+      `${PRODUCTION_API_ORIGIN}/*`,
       "http://127.0.0.1:8787/*",
       "http://localhost:8787/*",
     ]),

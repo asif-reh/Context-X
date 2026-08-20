@@ -1,0 +1,6 @@
+dist
+context-x.zip
+node_modules
+.env
+.env.*
+!.env.example
