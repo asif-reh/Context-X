@@ -2,5 +2,15 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "buildCommand": "echo skip-chrome-extension-build",
-  "outputDirectory": "public"
+  "outputDirectory": "public",
+  "rewrites": [
+    {
+      "source": "/v1/:path*",
+      "destination": "/api?__path=/v1/:path*"
+    },
+    {
+      "source": "/api/v1/:path*",
+      "destination": "/api?__path=/v1/:path*"
+    }
+  ]
 }
