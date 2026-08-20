@@ -1,0 +1,287 @@
+@import "../styles/theme.css";
+
+@source "../components/**/*.{ts,tsx}";
+@source "./**/*.{ts,tsx}";
+@source "../hooks/**/*.{ts,tsx}";
+
+/*
+ * Content-script styles are compiled by Vite and injected as a string into
+ * the Shadow Root. They never touch the host page's stylesheet.
+ */
+
+:host {
+  font-family: var(--font-sans);
+}
+
+#context-x-root {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-align: left;
+  text-transform: none;
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#context-x-root,
+#context-x-root * {
+  box-sizing: border-box;
+}
+
+@keyframes cx-chip-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(5px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cx-panel-in {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cx-panel-out {
+  from {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(6px) scale(0.97);
+  }
+}
+
+@keyframes cx-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes cx-shimmer-move {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes cx-reading-dots {
+  0%,
+  20% {
+    content: "";
+  }
+  40% {
+    content: ".";
+  }
+  60% {
+    content: "..";
+  }
+  80%,
+  100% {
+    content: "...";
+  }
+}
+
+@keyframes cx-sparkle-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+.cx-chip-in {
+  animation: cx-chip-in 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.cx-panel-in {
+  animation: cx-panel-in 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.cx-panel-out {
+  animation: cx-panel-out 160ms ease-in both;
+  pointer-events: none;
+}
+
+.cx-toast {
+  animation: cx-toast-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.cx-chip {
+  z-index: 2147483647;
+  background:
+    linear-gradient(oklch(0.16 0.012 286 / 0.94), oklch(0.16 0.012 286 / 0.94))
+      padding-box,
+    linear-gradient(135deg, oklch(0.82 0.12 195), oklch(0.62 0.22 292))
+      border-box;
+  border: 1px solid transparent;
+  box-shadow:
+    0 8px 28px -8px oklch(0 0 0 / 0.62),
+    0 0 18px oklch(0.62 0.22 292 / 0.2);
+}
+
+.cx-chip:hover {
+  box-shadow:
+    0 12px 32px -10px oklch(0.48 0.2 292 / 0.5),
+    0 0 22px oklch(0.62 0.22 292 / 0.28);
+}
+
+.cx-panel {
+  z-index: 2147483647;
+  background:
+    radial-gradient(
+      120% 70% at 0% 0%,
+      oklch(0.5 0.2 292 / 0.16),
+      transparent 55%
+    ),
+    oklch(0.165 0.014 286 / 0.96);
+  box-shadow:
+    0 0 0 1px oklch(0.62 0.22 292 / 22%),
+    0 18px 48px -14px oklch(0 0 0 / 64%),
+    0 0 32px oklch(0.62 0.22 292 / 9%);
+}
+
+.cx-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    oklch(0.27 0.01 286 / 70%) 0%,
+    oklch(0.4 0.04 292 / 85%) 50%,
+    oklch(0.27 0.01 286 / 70%) 100%
+  );
+  background-size: 200% 100%;
+  animation: cx-shimmer-move 1.2s ease-in-out infinite;
+}
+
+.cx-shimmer-d1 {
+  animation-delay: 0ms;
+}
+
+.cx-shimmer-d2 {
+  animation-delay: 140ms;
+}
+
+.cx-shimmer-d3 {
+  animation-delay: 280ms;
+}
+
+.cx-sparkle {
+  animation: cx-sparkle-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes cx-status-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cx-status-in {
+  animation: cx-status-in 220ms ease-out both;
+}
+
+.cx-reading::after {
+  display: inline-block;
+  width: 1.1em;
+  content: "";
+  animation: cx-reading-dots 1.2s steps(1, end) infinite;
+}
+
+.cx-scroll {
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: oklch(1 0 0 / 18%) transparent;
+}
+
+.cx-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.cx-scroll::-webkit-scrollbar-thumb {
+  background: oklch(1 0 0 / 16%);
+  border-radius: 999px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+@keyframes cx-caret-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.cx-caret::after {
+  content: "";
+  display: inline-block;
+  width: 1.5px;
+  height: 0.9em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: oklch(0.62 0.22 292);
+  animation: cx-caret-blink 1s steps(1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cx-chip-in,
+  .cx-panel-in,
+  .cx-panel-out,
+  .cx-toast,
+  .cx-shimmer,
+  .cx-sparkle,
+  .cx-reading::after,
+  .cx-caret::after,
+  .cx-status-in {
+    animation: none;
+  }
+
+  .cx-chip {
+    transition: none;
+  }
+}
