@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy policy — Context-X</title>
+    <link rel="canonical" href="https://context-x.vercel.app/privacy.html" />
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #111318;
+        --muted: #5c6370;
+        --line: #e2e6ea;
+        --bg: #f3f5f4;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 20px 24px;
+      }
+      header a { color: var(--muted); text-decoration: none; font-size: 0.92rem; }
+      .brand { color: var(--ink); font-weight: 700; letter-spacing: -0.04em; }
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 12px 24px 80px;
+      }
+      h1 { font-size: 2rem; letter-spacing: -0.03em; margin: 0 0 8px; }
+      h2 { font-size: 1.15rem; margin: 32px 0 8px; }
+      p, li { color: var(--muted); }
+      ul { padding-left: 1.2rem; }
+      a { color: #6d28d9; }
+      .meta { font-size: 0.9rem; color: #7a8190; }
+      hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/">Context-X</a>
+      <a href="/">Live app</a>
+    </header>
+    <main>
+      <h1>Privacy policy — Context-X</h1>
+      <p class="meta">Last updated: 25 August 2026</p>
+      <p>
+        Context-X is a Chrome extension and a hosted web app that explains
+        highlighted text using OpenAI. This policy describes what the product and
+        the Context-X API handle. It is written for users, portfolio visitors, and
+        Chrome Web Store review.
+      </p>
+
+      <h2>What Context-X stores</h2>
+      <ul>
+        <li><strong>Anonymous install id</strong> in <code>chrome.storage.local</code> (extension) or <code>localStorage</code> (this website). Used to enforce the free daily limit.</li>
+        <li><strong>Theme preference</strong> (light or dark) in <code>chrome.storage.sync</code> for the extension.</li>
+        <li><strong>Onboarding completion</strong> and <strong>monthly usage estimates</strong> in <code>chrome.storage.local</code>.</li>
+        <li><strong>Optional OpenAI API key</strong> in <code>chrome.storage.sync</code> only if you choose to paste your own key in the extension.</li>
+      </ul>
+      <p>The OpenAI key used for the free hosted plan lives on the Context-X server. It is not stored in the extension or this website.</p>
+
+      <h2>What is sent to third parties</h2>
+      <p>
+        When you click <strong>Explain</strong> (or use the shortcut) in hosted mode, Context-X
+        sends the selected term, a short window of nearby page text, the page title,
+        and the page URL to the <strong>Context-X API</strong>. The API then sends that prompt to
+        <strong>OpenAI</strong> (<code>https://api.openai.com</code>).
+      </p>
+      <p>
+        If you paste your own OpenAI key in Settings, the extension sends that request
+        <strong>directly to OpenAI</strong> and does not use the Context-X API for explanations.
+        OpenAI’s handling of the prompt is governed by
+        <a href="https://openai.com/policies/privacy-policy">OpenAI’s privacy policy</a>.
+      </p>
+
+      <h2>What Context-X does not do</h2>
+      <ul>
+        <li>It does not sell or rent personal data</li>
+        <li>It does not run ads or analytics SDKs</li>
+        <li>It does not collect accounts, emails, or browsing history beyond the current explanation request</li>
+        <li>It does not persist page content after the request finishes, other than a short local usage preview in Settings</li>
+      </ul>
+
+      <h2>Permissions</h2>
+      <ul>
+        <li><strong>storage</strong> — save theme, optional API key, install id, and local usage</li>
+        <li><strong>clipboardWrite</strong> — copy an explanation when you choose Copy</li>
+        <li><strong>Host access to the Context-X API and api.openai.com</strong> — network destinations for explanations</li>
+      </ul>
+      <p>
+        A content script runs on <code>http</code> and <code>https</code> pages so the overlay
+        can appear next to your selection. It does not scrape the page in the background.
+      </p>
+
+      <h2>Your choices</h2>
+      <ul>
+        <li>Add, remove, or replace an OpenAI API key in Settings at any time</li>
+        <li>Uninstall the extension to delete its <code>chrome.storage</code> data for this profile</li>
+        <li>Clear this site’s localStorage to reset the anonymous install id in the web app</li>
+      </ul>
+
+      <h2>Contact</h2>
+      <p>
+        Contact the maintainer through the project repository:
+        <a href="https://github.com/asif-reh/Context-X">github.com/asif-reh/Context-X</a>.
+      </p>
+      <hr />
+      <p class="meta">Context-X · <a href="/">Live app</a></p>
+    </main>
+  </body>
+</html>

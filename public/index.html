@@ -3,147 +3,607 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Context-X — explain any term</title>
+    <title>Context-X — explain any term in the context of the page</title>
     <meta
       name="description"
-      content="Paste a term and nearby context. Context-X returns a definition, a page-aware explanation, and an analogy."
+      content="Highlight a word on any article, paper, or doc. Context-X returns a definition, a page-aware explanation, and an analogy — not a generic dictionary lookup."
     />
+    <meta name="theme-color" content="#f3f5f4" />
+    <link rel="canonical" href="https://context-x.vercel.app/" />
+    <meta property="og:title" content="Context-X — explain any term in context" />
+    <meta
+      property="og:description"
+      content="A Grammarly-style overlay for technical reading. Highlight a word, get a definition, a page-aware explanation, and an analogy."
+    />
+    <meta property="og:url" content="https://context-x.vercel.app/" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link
+      rel="icon"
+      href="https://github.com/asif-reh/Context-X/raw/main/public/icons/icon32.png"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Context-X",
+        "applicationCategory": "BrowserApplication",
+        "operatingSystem": "Chrome",
+        "url": "https://context-x.vercel.app/",
+        "description": "Highlight a term and get a page-aware AI explanation.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
     <style>
       :root {
-        color-scheme: dark;
-        --bg: #09090f;
-        --fg: #f4f4f8;
-        --muted: #a1a1b5;
-        --line: rgba(255, 255, 255, 0.1);
-        --violet: #a78bfa;
+        color-scheme: light;
+        --bg: #f3f5f4;
+        --paper: #ffffff;
+        --ink: #111318;
+        --muted: #5c6370;
+        --line: #e2e6ea;
+        --violet: #6d28d9;
+        --violet-soft: rgba(109, 40, 217, 0.12);
+        --cta: #111827;
+        --shadow: 0 18px 50px rgba(17, 24, 39, 0.08);
+        --radius: 16px;
       }
       * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
       body {
         margin: 0;
-        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
         background: var(--bg);
-        color: var(--fg);
-        min-height: 100vh;
+        color: var(--ink);
+        line-height: 1.5;
       }
-      .glow {
-        pointer-events: none;
-        position: absolute;
-        inset: -6rem auto auto 50%;
-        width: 36rem;
-        height: 18rem;
-        transform: translateX(-50%);
-        background: radial-gradient(ellipse, rgba(124, 58, 237, 0.25), transparent 70%);
+      a { color: inherit; }
+      .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+      header.nav {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: rgba(243, 245, 244, 0.88);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid transparent;
       }
-      header, main, footer {
-        position: relative;
-        max-width: 720px;
-        margin: 0 auto;
-        padding: 0 20px;
-      }
-      header {
+      header.nav.scrolled { border-bottom-color: var(--line); }
+      .nav-inner {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        padding-top: 20px;
-        padding-bottom: 8px;
+        justify-content: space-between;
+        height: 64px;
       }
-      .brand { font-weight: 700; letter-spacing: -0.03em; }
-      nav a { color: var(--muted); text-decoration: none; margin-left: 16px; font-size: 0.9rem; }
-      nav a:hover { color: var(--fg); }
-      h1 {
-        font-size: clamp(1.6rem, 4vw, 2.2rem);
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
         letter-spacing: -0.04em;
-        margin: 28px 0 8px;
+        text-decoration: none;
       }
-      .lede { color: var(--muted); margin: 0 0 22px; }
-      label { display: block; font-size: 0.8rem; color: var(--muted); margin: 14px 0 6px; }
-      input, textarea {
-        width: 100%;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        background: #12121a;
-        color: var(--fg);
-        padding: 10px 12px;
-        font: inherit;
+      .brand svg { display: block; }
+      nav.links { display: flex; align-items: center; gap: 22px; }
+      nav.links a {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 500;
       }
-      textarea { min-height: 90px; resize: vertical; }
-      .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
-      button {
+      nav.links a:hover { color: var(--ink); }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         height: 42px;
         padding: 0 16px;
+        border-radius: 999px;
         border: 0;
-        border-radius: 10px;
-        background: linear-gradient(180deg, #8b5cf6, #7c3aed);
-        color: white;
-        font-weight: 650;
+        font: inherit;
+        font-weight: 600;
+        font-size: 0.92rem;
+        text-decoration: none;
         cursor: pointer;
       }
-      button:disabled { opacity: 0.55; cursor: default; }
-      .quota { color: var(--muted); font-size: 0.85rem; }
-      .err { color: #fca5a5; margin-top: 12px; font-size: 0.9rem; }
-      article {
-        margin: 22px 0 40px;
+      .btn-dark { background: var(--cta); color: #fff; }
+      .btn-dark:hover { background: #000; }
+      .btn-ghost {
+        background: transparent;
+        color: var(--ink);
         border: 1px solid var(--line);
-        border-radius: 14px;
-        background: #12121a;
+      }
+      .btn-ghost:hover { background: #fff; }
+      .btn:disabled { opacity: 0.55; cursor: default; }
+      .hero { padding: 56px 0 28px; text-align: center; }
+      .hero h1 {
+        margin: 0 auto 14px;
+        font-size: clamp(2.2rem, 5.4vw, 3.6rem);
+        letter-spacing: -0.055em;
+        line-height: 1.08;
+        max-width: 16ch;
+      }
+      .hero p {
+        margin: 0 auto 26px;
+        max-width: 42rem;
+        color: var(--muted);
+        font-size: 1.08rem;
+      }
+      .hero-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+      .trust {
+        display: flex;
+        justify-content: center;
+        gap: 22px;
+        flex-wrap: wrap;
+        margin-top: 22px;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 500;
+      }
+      .demo-shell {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        min-height: 520px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.9fr);
+      }
+      .doc {
+        position: relative;
+        padding: 28px 32px 40px;
+        border-right: 1px solid var(--line);
+      }
+      .doc-meta {
+        display: flex;
+        justify-content: space-between;
+        color: #8a9099;
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 18px;
+      }
+      .doc h2 {
+        margin: 0 0 14px;
+        font-size: 1.45rem;
+        letter-spacing: -0.04em;
+      }
+      .doc p { margin: 0 0 14px; font-size: 1.02rem; color: #2a2e35; }
+      .mark {
+        background: transparent;
+        border: 0;
+        padding: 0 1px;
+        margin: 0;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+        border-bottom: 2.5px solid #8b5cf6;
+        border-radius: 2px;
+      }
+      .mark:hover, .mark.active { background: var(--violet-soft); }
+      .chip {
+        position: absolute;
+        display: none;
+        align-items: center;
+        gap: 6px;
+        height: 32px;
+        padding: 0 10px 0 6px;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 999px;
+        background: #18181b;
+        color: #fafafa;
+        font-size: 12px;
+        font-weight: 600;
+        box-shadow: 0 10px 28px rgba(0,0,0,0.22);
+        z-index: 5;
+      }
+      .chip.show { display: inline-flex; }
+      .side {
+        background: #f7f8f8;
+        display: flex;
+        flex-direction: column;
+        min-height: 520px;
+      }
+      .side-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
         padding: 16px 18px;
+        border-bottom: 1px solid var(--line);
+        font-size: 0.82rem;
+        font-weight: 650;
+      }
+      .side-body { flex: 1; padding: 18px; }
+      .empty h3 { margin: 0 0 8px; font-size: 1.05rem; letter-spacing: -0.03em; }
+      .empty p, .step { color: var(--muted); font-size: 0.92rem; }
+      .step { display: flex; gap: 10px; margin: 12px 0; }
+      .num {
+        flex: none;
+        width: 22px; height: 22px;
+        border-radius: 999px;
+        background: #eceef0;
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 700;
+        display: grid; place-items: center;
       }
       .k {
         font-size: 10px;
         letter-spacing: 0.14em;
         text-transform: uppercase;
-        color: #7c7c90;
-        margin: 14px 0 4px;
+        color: #7a8190;
+        margin: 16px 0 6px;
+        font-weight: 650;
       }
       .k:first-child { margin-top: 0; }
-      article p { margin: 0; line-height: 1.55; }
-      footer { color: #6b6b80; font-size: 0.85rem; padding-bottom: 40px; }
-      footer a { color: #c4b5fd; }
+      .term-label {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 13px;
+        font-weight: 650;
+        margin: 0 0 12px;
+      }
+      .body-text { margin: 0; font-size: 0.94rem; color: #22262e; line-height: 1.55; }
+      .analogy {
+        margin-top: 16px;
+        padding: 12px;
+        border-radius: 12px;
+        background: var(--violet-soft);
+        border: 1px solid rgba(109, 40, 217, 0.15);
+      }
+      .err { color: #b42318; font-size: 0.92rem; }
+      .shimmer {
+        height: 10px;
+        border-radius: 6px;
+        margin: 8px 0;
+        background: linear-gradient(90deg, #eceef0, #f7f8f8, #eceef0);
+        background-size: 200% 100%;
+        animation: shine 1.2s ease-in-out infinite;
+      }
+      @keyframes shine {
+        from { background-position: 100% 0; }
+        to { background-position: -100% 0; }
+      }
+      .side-foot {
+        padding: 12px 18px 16px;
+        border-top: 1px solid var(--line);
+      }
+      .quota { color: var(--muted); font-size: 0.78rem; margin: 0 0 8px; }
+      .follow {
+        display: flex;
+        gap: 8px;
+      }
+      .follow input {
+        flex: 1;
+        height: 40px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        padding: 0 10px;
+        font: inherit;
+        background: #fff;
+      }
+      .follow button {
+        height: 40px;
+        border: 0;
+        border-radius: 10px;
+        background: var(--violet);
+        color: #fff;
+        font: inherit;
+        font-weight: 600;
+        padding: 0 12px;
+        cursor: pointer;
+      }
+      .follow button:disabled { opacity: 0.55; cursor: default; }
+      .follow-log { margin: 10px 0 0; }
+      .follow-log p { margin: 8px 0 0; font-size: 0.88rem; }
+      .q { color: var(--ink); font-weight: 600; }
+      .a { color: var(--muted); }
+      section.block { padding: 72px 0; }
+      .center { text-align: center; }
+      .block h2 {
+        margin: 0 0 10px;
+        font-size: clamp(1.6rem, 3vw, 2.1rem);
+        letter-spacing: -0.045em;
+      }
+      .lede { color: var(--muted); max-width: 40rem; margin: 0 auto 32px; }
+      .steps3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      .card {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 22px;
+      }
+      .card h3 { margin: 0 0 8px; font-size: 1.02rem; }
+      .card p { margin: 0; color: var(--muted); font-size: 0.94rem; }
+      .features {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+      details.faq {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px 18px;
+        margin: 8px 0;
+      }
+      details.faq summary {
+        cursor: pointer;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      details.faq p { margin: 8px 0 0; color: var(--muted); }
+      footer.site {
+        border-top: 1px solid var(--line);
+        padding: 28px 0 48px;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+      .foot-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      footer.site a { color: var(--ink); }
+      @media (max-width: 860px) {
+        nav.links a.hide-sm { display: none; }
+        .demo-shell { grid-template-columns: 1fr; }
+        .doc { border-right: 0; border-bottom: 1px solid var(--line); }
+        .steps3, .features { grid-template-columns: 1fr; }
+        .hero { padding-top: 32px; }
+      }
     </style>
   </head>
   <body>
-    <div class="glow" aria-hidden="true"></div>
-    <header>
-      <div class="brand">Context-X</div>
-      <nav>
-        <a href="https://asif-reh.github.io/Context-X/">Site</a>
-        <a href="https://asif-reh.github.io/Context-X/privacy.html">Privacy</a>
-      </nav>
+    <header class="nav" id="nav">
+      <div class="wrap nav-inner">
+        <a class="brand" href="#top">
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <rect width="32" height="32" rx="8" fill="#18181B" />
+            <path d="M9 8.5 16 16 9 23.5" stroke="#22D3EE" stroke-width="3.2" stroke-linecap="round" />
+            <path d="M23 8.5 16 16 23 23.5" stroke="#8B5CF6" stroke-width="3.2" stroke-linecap="round" />
+          </svg>
+          Context-X
+        </a>
+        <nav class="links">
+          <a class="hide-sm" href="#how">How it works</a>
+          <a class="hide-sm" href="/privacy.html">Privacy</a>
+          <a href="https://github.com/asif-reh/Context-X">GitHub</a>
+          <a class="btn btn-dark" href="#demo">Try it now</a>
+        </nav>
+      </div>
     </header>
-    <main>
-      <h1>Explain a term in context.</h1>
-      <p class="lede">
-        Paste a word and a few nearby sentences. This is the live hosted app —
-        use it as often as you need today (500 explains / day).
-      </p>
-      <form id="form">
-        <label for="term">Term</label>
-        <input id="term" required maxlength="200" placeholder="throughput" />
-        <label for="context">Nearby context (optional)</label>
-        <textarea id="context" maxlength="4000" placeholder="The API is limited by throughput at peak hours…"></textarea>
-        <div class="row">
-          <button type="submit" id="go">Explain</button>
-          <span class="quota" id="quota"></span>
+
+    <main id="top">
+      <section class="hero wrap">
+        <h1>Great reading starts with understanding.</h1>
+        <p>
+          Highlight a technical term. Context-X reads the nearby sentences and
+          returns a definition, a page-aware explanation, and a short analogy —
+          the way Grammarly sits on writing, but for the page you are reading.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-dark" href="#demo">Try it now — it’s free</a>
+          <a class="btn btn-ghost" href="https://github.com/asif-reh/Context-X">View the source</a>
         </div>
-      </form>
-      <p class="err" id="error" hidden></p>
-      <article id="result" hidden>
-        <p class="k">Definition</p>
-        <p id="definition"></p>
-        <p class="k">On this page</p>
-        <p id="explanation"></p>
-        <p class="k">Analogy</p>
-        <p id="analogy"></p>
-      </article>
+        <div class="trust">
+          <span>No account required</span>
+          <span>500 hosted explains / day</span>
+          <span>Same API as the Chrome extension</span>
+        </div>
+      </section>
+
+      <section class="wrap" id="demo" aria-label="Live product demo">
+        <div class="demo-shell">
+          <article class="doc" id="article">
+            <div class="doc-meta">
+              <span>docs.example.com / checkout-api</span>
+              <span>Click an underlined term, or highlight any word</span>
+            </div>
+            <div id="article-body">
+            <h2>Designing a resilient checkout API</h2>
+            <p>
+              Our checkout service is limited by
+              <button type="button" class="mark" data-term="throughput">throughput</button>
+              at peak hours. Extra requests queue instead of failing immediately,
+              so a flash sale does not take the whole storefront down.
+            </p>
+            <p>
+              Every charge must be
+              <button type="button" class="mark" data-term="idempotent">idempotent</button>
+              so a double-click does not bill the card twice. Webhooks from the
+              processor can arrive out of order; we treat payment state as
+              <button type="button" class="mark" data-term="eventually consistent">eventually consistent</button>.
+            </p>
+            <p>
+              A
+              <button type="button" class="mark" data-term="rate limit">rate limit</button>
+              of 80 requests per second protects downstream ledgers. When we
+              exceed it, clients retry with
+              <button type="button" class="mark" data-term="jitter">jitter</button>
+              instead of stampeding the same endpoint.
+            </p>
+            </div>
+            <button type="button" class="chip" id="chip" hidden>
+              <svg width="16" height="16" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                <rect width="32" height="32" rx="6" fill="#27272A" />
+                <path d="M9 8.5 16 16 9 23.5" stroke="#22D3EE" stroke-width="3.2" stroke-linecap="round" />
+                <path d="M23 8.5 16 16 23 23.5" stroke="#8B5CF6" stroke-width="3.2" stroke-linecap="round" />
+              </svg>
+              Explain
+            </button>
+          </article>
+
+          <aside class="side" aria-live="polite">
+            <div class="side-head">
+              <svg width="18" height="18" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                <rect width="32" height="32" rx="8" fill="#18181B" />
+                <path d="M9 8.5 16 16 9 23.5" stroke="#22D3EE" stroke-width="3.2" stroke-linecap="round" />
+                <path d="M23 8.5 16 16 23 23.5" stroke="#8B5CF6" stroke-width="3.2" stroke-linecap="round" />
+              </svg>
+              Explanation
+            </div>
+            <div class="side-body" id="panel">
+              <div class="empty" id="idle">
+                <h3>Let’s get started.</h3>
+                <div class="step"><span class="num">1</span><span>Click a violet underline, or highlight any word in the article.</span></div>
+                <div class="step"><span class="num">2</span><span>Context-X reads the nearby sentences — not a generic glossary.</span></div>
+                <div class="step"><span class="num">3</span><span>Get a definition, a page-aware explanation, and an analogy.</span></div>
+              </div>
+              <div id="loading" hidden>
+                <p class="term-label" id="loading-term"></p>
+                <div class="shimmer" style="width: 70%"></div>
+                <div class="shimmer"></div>
+                <div class="shimmer" style="width: 88%"></div>
+              </div>
+              <div id="error" class="err" hidden></div>
+              <div id="result" hidden>
+                <p class="term-label" id="result-term"></p>
+                <p class="k">Definition</p>
+                <p class="body-text" id="definition"></p>
+                <p class="k">On this page</p>
+                <p class="body-text" id="explanation"></p>
+                <div class="analogy">
+                  <p class="k" style="margin-top:0">Analogy</p>
+                  <p class="body-text" id="analogy"></p>
+                </div>
+                <div class="follow-log" id="follow-log"></div>
+              </div>
+            </div>
+            <div class="side-foot">
+              <p class="quota" id="quota">500 / 500 left today</p>
+              <form class="follow" id="follow-form">
+                <input
+                  id="follow-q"
+                  maxlength="500"
+                  placeholder="Ask a follow-up"
+                  autocomplete="off"
+                  disabled
+                />
+                <button type="submit" id="follow-go" disabled>Ask</button>
+              </form>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="block wrap center" id="how">
+        <h2>How it works</h2>
+        <p class="lede">The live editor above is the real product API. The Chrome extension uses the same three-step overlay on any webpage.</p>
+        <div class="steps3">
+          <article class="card">
+            <h3>1. Highlight</h3>
+            <p>Select a word or short phrase — throughput, goroutine, idempotent — the way you would in Grammarly.</p>
+          </article>
+          <article class="card">
+            <h3>2. Explain</h3>
+            <p>A small chip appears. One click sends the term plus nearby sentences through the hosted Context-X API.</p>
+          </article>
+          <article class="card">
+            <h3>3. Understand</h3>
+            <p>You get a definition, why it matters on this page, and an analogy. Ask a follow-up without leaving the overlay.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="block wrap">
+        <h2 class="center">Built for technical reading</h2>
+        <p class="lede center">Not a spellchecker. A context-aware explainer that stays out of the way until you ask.</p>
+        <div class="features">
+          <article class="card">
+            <h3>Page-aware, not generic</h3>
+            <p>Nearby sentences travel with the term, so “throughput” on an API doc is request capacity — not network bandwidth.</p>
+          </article>
+          <article class="card">
+            <h3>No key to paste</h3>
+            <p>Hosted explanations are free to try, 500 per day. Optional BYOK in the Chrome extension for unlimited use.</p>
+          </article>
+          <article class="card">
+            <h3>Same backend as the extension</h3>
+            <p>This site, the waitlist, and the MV3 overlay all call https://context-x.vercel.app. What you see here is production.</p>
+          </article>
+          <article class="card">
+            <h3>Stays out of the page</h3>
+            <p>The Chrome overlay lives in Shadow DOM so host-page CSS cannot restyle it. Shortcut: Option+X / Alt+X.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="block wrap">
+        <h2 class="center">This is a hosted AI product</h2>
+        <p class="lede center">Selected text and nearby context go to the Context-X API, then OpenAI. We do not sell content, run ads, or keep a browsing history.</p>
+        <div class="center">
+          <a class="btn btn-ghost" href="/privacy.html">Read the privacy policy</a>
+        </div>
+      </section>
+
+      <section class="block wrap">
+        <h2 class="center">Frequently asked questions</h2>
+        <details class="faq">
+          <summary>Is this just a dictionary?</summary>
+          <p>No. A dictionary ignores the page. Context-X always conditions on nearby sentences so the meaning matches this document.</p>
+        </details>
+        <details class="faq">
+          <summary>Do I need an OpenAI key?</summary>
+          <p>Not for this live demo. The key stays on the server. In the Chrome extension you can paste your own key in Settings to skip the daily cap.</p>
+        </details>
+        <details class="faq">
+          <summary>What is the daily limit?</summary>
+          <p>500 hosted explains per browser per day, tracked by an anonymous install id in localStorage (or chrome.storage in the extension).</p>
+        </details>
+        <details class="faq">
+          <summary>Can I use this on my resume?</summary>
+          <p>Yes. This URL is the production app: https://context-x.vercel.app/ — click an underlined term to see it work end to end.</p>
+        </details>
+        <details class="faq">
+          <summary>Where is the Chrome extension?</summary>
+          <p>Load unpacked from dist/ after npm run build. Store listing is next; the live web app is the public demo until then.</p>
+        </details>
+      </section>
     </main>
-    <footer>
-      Chrome extension: load unpacked from <code>dist/</code> after
-      <code>npm run build</code>. Same backend: this URL.
+
+    <footer class="site">
+      <div class="wrap foot-row">
+        <span>Context-X · live product · <a href="https://context-x.vercel.app/">context-x.vercel.app</a></span>
+        <span>
+          <a href="/privacy.html">Privacy</a>
+          ·
+          <a href="https://github.com/asif-reh/Context-X">GitHub</a>
+          ·
+          <a href="https://asif-reh.github.io/Context-X/">Landing</a>
+        </span>
+      </div>
     </footer>
+
     <script>
       const INSTALL_KEY = "cx-install-id";
-      const UUID =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      const PAGE_TITLE = "Designing a resilient checkout API";
+
+      const article = document.getElementById("article");
+      const chip = document.getElementById("chip");
+      const idle = document.getElementById("idle");
+      const loading = document.getElementById("loading");
+      const errorBox = document.getElementById("error");
+      const result = document.getElementById("result");
+      const followForm = document.getElementById("follow-form");
+      const followInput = document.getElementById("follow-q");
+      const followGo = document.getElementById("follow-go");
+      const followLog = document.getElementById("follow-log");
+
+      let currentTerm = "";
+      let currentPrior = { definition: "", explanation: "", analogy: "" };
+      let history = [];
+      let pendingSelection = "";
 
       function installId() {
         const existing = localStorage.getItem(INSTALL_KEY);
@@ -153,29 +613,78 @@
         return id;
       }
 
+      function articleContext() {
+        return document.getElementById("article-body").innerText.replace(/\s+/g, " ").trim();
+      }
+
       function parseExplainMarkdown(raw, term) {
         const text = raw.replace(/\r\n/g, "\n");
         const pattern = /\*\*\s*(Definition|Explanation|Analogy)\s*\*\*/gi;
         const matches = [...text.matchAll(pattern)];
-        const result = { term, definition: "", explanation: "", analogy: "" };
+        const parsed = { term, definition: "", explanation: "", analogy: "" };
         for (let i = 0; i < matches.length; i += 1) {
           const match = matches[i];
           const heading = match[1].toLowerCase();
           const start = match.index + match[0].length;
           const end = matches[i + 1] ? matches[i + 1].index : text.length;
           const body = text.slice(start, end).trim();
-          if (heading === "definition") result.definition = body;
-          if (heading === "explanation") result.explanation = body;
-          if (heading === "analogy") result.analogy = body;
+          if (heading === "definition") parsed.definition = body;
+          if (heading === "explanation") parsed.explanation = body;
+          if (heading === "analogy") parsed.analogy = body;
         }
-        return result;
+        return parsed;
+      }
+
+      function showState(name) {
+        idle.hidden = name !== "idle";
+        loading.hidden = name !== "loading";
+        errorBox.hidden = name !== "error";
+        result.hidden = name !== "result";
       }
 
       function render(data) {
-        document.getElementById("result").hidden = false;
+        currentPrior = data;
+        document.getElementById("result-term").textContent = data.term;
         document.getElementById("definition").textContent = data.definition || "…";
         document.getElementById("explanation").textContent = data.explanation || "…";
         document.getElementById("analogy").textContent = data.analogy || "…";
+        showState("result");
+      }
+
+      function setFollowEnabled(on) {
+        followInput.disabled = !on;
+        followGo.disabled = !on;
+      }
+
+      async function readSse(response, onToken) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let raw = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith("data:")) continue;
+            const data = trimmed.slice(5).trim();
+            if (!data || data === "[DONE]") continue;
+            try {
+              const parsed = JSON.parse(data);
+              const token = parsed?.choices?.[0]?.delta?.content;
+              if (typeof token === "string") {
+                raw += token;
+                onToken(raw);
+              }
+            } catch {
+              /* incomplete chunk */
+            }
+          }
+        }
+        return raw;
       }
 
       async function loadQuota() {
@@ -193,16 +702,19 @@
         }
       }
 
-      document.getElementById("form").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const term = document.getElementById("term").value.trim();
-        const context = document.getElementById("context").value.trim();
-        const error = document.getElementById("error");
-        const go = document.getElementById("go");
-        error.hidden = true;
-        go.disabled = true;
-        go.textContent = "Explaining…";
-        let raw = "";
+      async function explain(term) {
+        const clean = term.trim();
+        if (!clean) return;
+        currentTerm = clean;
+        history = [];
+        followLog.innerHTML = "";
+        setFollowEnabled(false);
+        document.getElementById("loading-term").textContent = clean;
+        showState("loading");
+        document.querySelectorAll(".mark").forEach((node) => {
+          node.classList.toggle("active", node.dataset.term === clean);
+        });
+        hideChip();
         try {
           const response = await fetch("/v1/explain", {
             method: "POST",
@@ -211,9 +723,9 @@
               "X-Install-Id": installId(),
             },
             body: JSON.stringify({
-              term,
-              context,
-              pageTitle: "Context-X web",
+              term: clean,
+              context: articleContext(),
+              pageTitle: PAGE_TITLE,
               pageUrl: location.href,
             }),
           });
@@ -222,42 +734,118 @@
             const payload = await response.json().catch(() => ({}));
             throw new Error(payload.message || "Could not explain that.");
           }
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder();
-          let buffer = "";
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split("\n");
-            buffer = lines.pop() || "";
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed.startsWith("data:")) continue;
-              const data = trimmed.slice(5).trim();
-              if (!data || data === "[DONE]") continue;
-              try {
-                const parsed = JSON.parse(data);
-                const token = parsed?.choices?.[0]?.delta?.content;
-                if (typeof token === "string") {
-                  raw += token;
-                  render(parseExplainMarkdown(raw, term));
-                }
-              } catch {
-                /* ignore incomplete SSE chunks */
-              }
-            }
-          }
-          if (!raw.trim()) throw new Error("Empty explanation. Try again.");
-          render(parseExplainMarkdown(raw, term));
+          const raw = await readSse(response, (text) => {
+            render(parseExplainMarkdown(text, clean));
+          });
+          if (!raw.trim()) throw new Error("Empty explanation. Try another term.");
+          render(parseExplainMarkdown(raw, clean));
+          setFollowEnabled(true);
           await loadQuota();
         } catch (err) {
-          error.hidden = false;
-          error.textContent = err instanceof Error ? err.message : "Something went wrong.";
-        } finally {
-          go.disabled = false;
-          go.textContent = "Explain";
+          errorBox.textContent = err instanceof Error ? err.message : "Something went wrong.";
+          showState("error");
         }
+      }
+
+      function hideChip() {
+        chip.classList.remove("show");
+        chip.hidden = true;
+        pendingSelection = "";
+      }
+
+      function showChipForSelection() {
+        const selection = window.getSelection();
+        const text = selection ? selection.toString().trim() : "";
+        if (
+          !selection ||
+          !text ||
+          text.length < 2 ||
+          text.length > 80 ||
+          !article.contains(selection.anchorNode)
+        ) {
+          hideChip();
+          return;
+        }
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        const box = article.getBoundingClientRect();
+        pendingSelection = text;
+        chip.hidden = false;
+        chip.classList.add("show");
+        chip.style.top = rect.bottom - box.top + article.scrollTop + 8 + "px";
+        chip.style.left = Math.max(8, rect.left - box.left) + "px";
+      }
+
+      document.querySelectorAll(".mark").forEach((node) => {
+        node.addEventListener("click", (event) => {
+          event.preventDefault();
+          void explain(node.dataset.term);
+        });
+      });
+
+      article.addEventListener("mouseup", () => {
+        window.setTimeout(showChipForSelection, 0);
+      });
+
+      chip.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+      });
+      chip.addEventListener("click", () => {
+        if (pendingSelection) void explain(pendingSelection);
+      });
+
+      followForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const question = followInput.value.trim();
+        if (!question || !currentTerm) return;
+        followInput.value = "";
+        setFollowEnabled(false);
+        const row = document.createElement("div");
+        row.innerHTML =
+          '<p class="q"></p><p class="a">Thinking…</p>';
+        row.querySelector(".q").textContent = question;
+        const answer = row.querySelector(".a");
+        followLog.appendChild(row);
+        try {
+          const response = await fetch("/v1/follow-up", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Install-Id": installId(),
+            },
+            body: JSON.stringify({
+              term: currentTerm,
+              context: articleContext(),
+              pageTitle: PAGE_TITLE,
+              pageUrl: location.href,
+              question,
+              prior: currentPrior,
+              history,
+            }),
+          });
+          const type = response.headers.get("content-type") || "";
+          if (!response.ok || type.includes("application/json")) {
+            const payload = await response.json().catch(() => ({}));
+            throw new Error(payload.message || "Follow-up failed.");
+          }
+          const raw = await readSse(response, (text) => {
+            answer.textContent = text;
+          });
+          if (!raw.trim()) throw new Error("Empty reply.");
+          answer.textContent = raw.trim();
+          history.push({ question, answer: raw.trim() });
+          await loadQuota();
+        } catch (err) {
+          answer.textContent =
+            err instanceof Error ? err.message : "Could not ask that.";
+        } finally {
+          setFollowEnabled(true);
+          followInput.focus();
+        }
+      });
+
+      window.addEventListener("scroll", () => {
+        document.getElementById("nav").classList.toggle("scrolled", window.scrollY > 8);
       });
 
       loadQuota();

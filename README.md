@@ -1,5 +1,12 @@
 # Context-X
 
+**Live product (use this on a resume or portfolio):** [https://context-x.vercel.app/](https://context-x.vercel.app/)
+
+Click an underlined term — or highlight any word — and Context-X streams a definition, a page-aware explanation, and an analogy. No account. 500 hosted explains / day.
+
+[![Live demo](https://img.shields.io/badge/live-context--x.vercel.app-6d28d9?style=for-the-badge)](https://context-x.vercel.app/)
+[![GitHub Pages](https://img.shields.io/badge/landing-asif--reh.github.io-111827?style=for-the-badge)](https://asif-reh.github.io/Context-X/)
+
 Context-X is a Chrome extension that explains technical terms **in the context of the page you are reading**.
 
 Highlight a word or short phrase — *throughput*, *goroutine*, *idempotent* — and Context-X returns a short definition, a page-aware explanation, and an analogy. It is not a generic dictionary lookup.
@@ -58,8 +65,9 @@ The OpenAI key in `.env` is read **only** by `npm run server`. It is never writt
 
 Hosted mode is the default. If you want to skip the daily cap, paste a key in **Settings**. That key stays in your Chrome profile and is sent only to `https://api.openai.com`.
 
-Public privacy policy: https://asif-reh.github.io/Context-X/privacy.html
-Landing page: https://asif-reh.github.io/Context-X/
+- **Live app:** https://context-x.vercel.app/
+- **Landing / waitlist:** https://asif-reh.github.io/Context-X/
+- **Privacy:** https://asif-reh.github.io/Context-X/privacy.html
 
 ## How to use
 
@@ -108,9 +116,9 @@ Public privacy policy (Chrome Web Store URL):
 
 https://asif-reh.github.io/Context-X/privacy.html
 
-Landing page:
+Live product:
 
-https://asif-reh.github.io/Context-X/
+https://context-x.vercel.app/
 
 ## Roadmap
 

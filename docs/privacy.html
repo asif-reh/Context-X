@@ -37,16 +37,18 @@
   <body>
     <main>
       <h1>Privacy policy — Context-X</h1>
-      <p class="meta">Last updated: 20 August 2026</p>
+      <p class="meta">Last updated: 25 August 2026</p>
       <p>
-        Context-X is a Chrome extension that explains highlighted text using OpenAI.
+        Context-X is a Chrome extension and a hosted web app
+        (<a href="https://context-x.vercel.app/">context-x.vercel.app</a>)
+        that explains highlighted text using OpenAI.
         This policy describes what the extension and the Context-X API handle. It is
         written for users and for Chrome Web Store review.
       </p>
 
       <h2>What Context-X stores</h2>
       <ul>
-        <li><strong>Anonymous install id</strong> in <code>chrome.storage.local</code> (this browser only). Used to enforce the free daily limit.</li>
+        <li><strong>Anonymous install id</strong> in <code>chrome.storage.local</code> (extension) or <code>localStorage</code> (the live web app). Used to enforce the free daily limit.</li>
         <li><strong>Theme preference</strong> (light or dark) in <code>chrome.storage.sync</code>.</li>
         <li><strong>Onboarding completion</strong> and <strong>monthly usage estimates</strong> in <code>chrome.storage.local</code>.</li>
         <li><strong>Optional OpenAI API key</strong> in <code>chrome.storage.sync</code> only if you choose to paste your own key.</li>
