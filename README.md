@@ -13,7 +13,7 @@ The key never enters the page. Hosted explanations go through the Context-X API;
 - Page-aware prompt (nearby sentences or a small window of code)
 - Streaming overlay: definition, context, analogy
 - Follow-up questions in the same popup (with quick actions)
-- Hosted API: users do not paste an OpenAI key (20 free explains / day)
+- Hosted API: users do not paste an OpenAI key (500 hosted explains / day)
 - Optional BYOK in Settings for unlimited use
 - First-run onboarding
 - Options page: hosted status, optional key, model, dark mode, usage

@@ -4,6 +4,7 @@ import {
 } from "./explainPrompt";
 import { getHostedApiUrl, isHostedMode } from "./hosted";
 import { getOrCreateInstallId } from "./installId";
+import { DAILY_EXPLAIN_LIMIT } from "./limits";
 import { toCompletionUsage, estimateTokensFromText } from "./pricing";
 import type { CompletionUsage, TokenUsage } from "./pricing";
 import { finalizeExplanation, parseExplainMarkdown } from "./parseExplanation";
@@ -67,7 +68,7 @@ export function messageFor(code: ExplainErrorCode, status?: number): string {
     case "RATE_LIMIT":
       return "The explanation service is busy right now. Wait a few seconds, then tap Retry.";
     case "QUOTA":
-      return "You've used today's 20 free explanations. Come back tomorrow, or add your own OpenAI key in Settings.";
+      return `You've used today's ${DAILY_EXPLAIN_LIMIT} hosted explanations. Come back tomorrow, or add your own OpenAI key in Settings.`;
     case "NETWORK":
       return "Could not reach OpenAI. Check your internet connection, then tap Retry.";
     case "TIMEOUT":

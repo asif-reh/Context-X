@@ -3,62 +3,264 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Context-X API</title>
+    <title>Context-X — explain any term</title>
+    <meta
+      name="description"
+      content="Paste a term and nearby context. Context-X returns a definition, a page-aware explanation, and an analogy."
+    />
     <style>
-      :root { color-scheme: dark; }
+      :root {
+        color-scheme: dark;
+        --bg: #09090f;
+        --fg: #f4f4f8;
+        --muted: #a1a1b5;
+        --line: rgba(255, 255, 255, 0.1);
+        --violet: #a78bfa;
+      }
+      * { box-sizing: border-box; }
       body {
         margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--fg);
         min-height: 100vh;
-        font-family: ui-sans-serif, system-ui, sans-serif;
-        background: #09090f;
-        color: #f4f4f8;
-        display: grid;
-        place-items: center;
       }
-      main {
-        width: min(440px, calc(100% - 32px));
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-        padding: 28px 24px;
+      .glow {
+        pointer-events: none;
+        position: absolute;
+        inset: -6rem auto auto 50%;
+        width: 36rem;
+        height: 18rem;
+        transform: translateX(-50%);
+        background: radial-gradient(ellipse, rgba(124, 58, 237, 0.25), transparent 70%);
+      }
+      header, main, footer {
+        position: relative;
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 20px;
+        padding-bottom: 8px;
+      }
+      .brand { font-weight: 700; letter-spacing: -0.03em; }
+      nav a { color: var(--muted); text-decoration: none; margin-left: 16px; font-size: 0.9rem; }
+      nav a:hover { color: var(--fg); }
+      h1 {
+        font-size: clamp(1.6rem, 4vw, 2.2rem);
+        letter-spacing: -0.04em;
+        margin: 28px 0 8px;
+      }
+      .lede { color: var(--muted); margin: 0 0 22px; }
+      label { display: block; font-size: 0.8rem; color: var(--muted); margin: 14px 0 6px; }
+      input, textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 10px;
         background: #12121a;
+        color: var(--fg);
+        padding: 10px 12px;
+        font: inherit;
       }
-      h1 { margin: 0 0 8px; font-size: 1.25rem; letter-spacing: -0.03em; }
-      p { color: #a1a1b5; line-height: 1.5; }
-      .ok { color: #6ee7b7; }
-      .bad { color: #fca5a5; }
-      a { color: #c4b5fd; }
-      code { font-size: 0.85rem; color: #e4e4ef; }
+      textarea { min-height: 90px; resize: vertical; }
+      .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
+      button {
+        height: 42px;
+        padding: 0 16px;
+        border: 0;
+        border-radius: 10px;
+        background: linear-gradient(180deg, #8b5cf6, #7c3aed);
+        color: white;
+        font-weight: 650;
+        cursor: pointer;
+      }
+      button:disabled { opacity: 0.55; cursor: default; }
+      .quota { color: var(--muted); font-size: 0.85rem; }
+      .err { color: #fca5a5; margin-top: 12px; font-size: 0.9rem; }
+      article {
+        margin: 22px 0 40px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #12121a;
+        padding: 16px 18px;
+      }
+      .k {
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #7c7c90;
+        margin: 14px 0 4px;
+      }
+      .k:first-child { margin-top: 0; }
+      article p { margin: 0; line-height: 1.55; }
+      footer { color: #6b6b80; font-size: 0.85rem; padding-bottom: 40px; }
+      footer a { color: #c4b5fd; }
     </style>
   </head>
   <body>
+    <div class="glow" aria-hidden="true"></div>
+    <header>
+      <div class="brand">Context-X</div>
+      <nav>
+        <a href="https://asif-reh.github.io/Context-X/">Site</a>
+        <a href="https://asif-reh.github.io/Context-X/privacy.html">Privacy</a>
+      </nav>
+    </header>
     <main>
-      <h1>Context-X API</h1>
-      <p id="status">Checking health…</p>
-      <p>
-        This is the backend, not the Chrome extension. The product site is
-        <a href="https://asif-reh.github.io/Context-X/">asif-reh.github.io/Context-X</a>.
+      <h1>Explain a term in context.</h1>
+      <p class="lede">
+        Paste a word and a few nearby sentences. This is the live hosted app —
+        use it as often as you need today (500 explains / day).
       </p>
-      <p>Health: <code>/v1/health</code></p>
+      <form id="form">
+        <label for="term">Term</label>
+        <input id="term" required maxlength="200" placeholder="throughput" />
+        <label for="context">Nearby context (optional)</label>
+        <textarea id="context" maxlength="4000" placeholder="The API is limited by throughput at peak hours…"></textarea>
+        <div class="row">
+          <button type="submit" id="go">Explain</button>
+          <span class="quota" id="quota"></span>
+        </div>
+      </form>
+      <p class="err" id="error" hidden></p>
+      <article id="result" hidden>
+        <p class="k">Definition</p>
+        <p id="definition"></p>
+        <p class="k">On this page</p>
+        <p id="explanation"></p>
+        <p class="k">Analogy</p>
+        <p id="analogy"></p>
+      </article>
     </main>
+    <footer>
+      Chrome extension: load unpacked from <code>dist/</code> after
+      <code>npm run build</code>. Same backend: this URL.
+    </footer>
     <script>
-      fetch("/v1/health")
-        .then((r) => r.json())
-        .then((data) => {
-          const el = document.getElementById("status");
-          if (data.ok) {
-            el.className = "ok";
-            el.textContent = "OpenAI key is loaded. Hosted explanations are on.";
-          } else {
-            el.className = "bad";
-            el.textContent =
-              "API is up, but OPENAI_API_KEY is missing on this deployment. Add it in Vercel → Settings → Environment Variables, then Redeploy.";
+      const INSTALL_KEY = "cx-install-id";
+      const UUID =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+      function installId() {
+        const existing = localStorage.getItem(INSTALL_KEY);
+        if (existing && UUID.test(existing)) return existing;
+        const id = crypto.randomUUID();
+        localStorage.setItem(INSTALL_KEY, id);
+        return id;
+      }
+
+      function parseExplainMarkdown(raw, term) {
+        const text = raw.replace(/\r\n/g, "\n");
+        const pattern = /\*\*\s*(Definition|Explanation|Analogy)\s*\*\*/gi;
+        const matches = [...text.matchAll(pattern)];
+        const result = { term, definition: "", explanation: "", analogy: "" };
+        for (let i = 0; i < matches.length; i += 1) {
+          const match = matches[i];
+          const heading = match[1].toLowerCase();
+          const start = match.index + match[0].length;
+          const end = matches[i + 1] ? matches[i + 1].index : text.length;
+          const body = text.slice(start, end).trim();
+          if (heading === "definition") result.definition = body;
+          if (heading === "explanation") result.explanation = body;
+          if (heading === "analogy") result.analogy = body;
+        }
+        return result;
+      }
+
+      function render(data) {
+        document.getElementById("result").hidden = false;
+        document.getElementById("definition").textContent = data.definition || "…";
+        document.getElementById("explanation").textContent = data.explanation || "…";
+        document.getElementById("analogy").textContent = data.analogy || "…";
+      }
+
+      async function loadQuota() {
+        try {
+          const response = await fetch("/v1/quota", {
+            headers: { "X-Install-Id": installId() },
+          });
+          const data = await response.json();
+          if (typeof data.remaining === "number") {
+            document.getElementById("quota").textContent =
+              data.remaining + " / " + data.limit + " left today";
           }
-        })
-        .catch(() => {
-          const el = document.getElementById("status");
-          el.className = "bad";
-          el.textContent = "Could not reach /v1/health.";
-        });
+        } catch {
+          document.getElementById("quota").textContent = "";
+        }
+      }
+
+      document.getElementById("form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const term = document.getElementById("term").value.trim();
+        const context = document.getElementById("context").value.trim();
+        const error = document.getElementById("error");
+        const go = document.getElementById("go");
+        error.hidden = true;
+        go.disabled = true;
+        go.textContent = "Explaining…";
+        let raw = "";
+        try {
+          const response = await fetch("/v1/explain", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Install-Id": installId(),
+            },
+            body: JSON.stringify({
+              term,
+              context,
+              pageTitle: "Context-X web",
+              pageUrl: location.href,
+            }),
+          });
+          const type = response.headers.get("content-type") || "";
+          if (!response.ok || type.includes("application/json")) {
+            const payload = await response.json().catch(() => ({}));
+            throw new Error(payload.message || "Could not explain that.");
+          }
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed.startsWith("data:")) continue;
+              const data = trimmed.slice(5).trim();
+              if (!data || data === "[DONE]") continue;
+              try {
+                const parsed = JSON.parse(data);
+                const token = parsed?.choices?.[0]?.delta?.content;
+                if (typeof token === "string") {
+                  raw += token;
+                  render(parseExplainMarkdown(raw, term));
+                }
+              } catch {
+                /* ignore incomplete SSE chunks */
+              }
+            }
+          }
+          if (!raw.trim()) throw new Error("Empty explanation. Try again.");
+          render(parseExplainMarkdown(raw, term));
+          await loadQuota();
+        } catch (err) {
+          error.hidden = false;
+          error.textContent = err instanceof Error ? err.message : "Something went wrong.";
+        } finally {
+          go.disabled = false;
+          go.textContent = "Explain";
+        }
+      });
+
+      loadQuota();
     </script>
   </body>
 </html>

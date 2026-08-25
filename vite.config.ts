@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const fallback =
     mode === "production"
-      ? "https://context-x-asifrehs-projects.vercel.app/api"
+      ? "https://context-x.vercel.app"
       : "http://127.0.0.1:8787";
   const apiUrl = (env.VITE_CONTEXT_X_API_URL || fallback).replace(/\/$/, "");
 

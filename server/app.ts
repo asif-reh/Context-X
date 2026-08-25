@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { DAILY_EXPLAIN_LIMIT } from "../src/lib/limits";
 import { pingOpenAi, streamExplain, streamFollowUp } from "./openai";
 import { consumeQuota, getQuota } from "./ratelimit";
 import {
@@ -114,7 +115,7 @@ app.post("/v1/explain", async (c) => {
     return jsonError(
       429,
       "QUOTA",
-      "You've used today's 20 free explanations. Come back tomorrow, or add your own OpenAI key in Settings for unlimited use.",
+      `You've used today's ${DAILY_EXPLAIN_LIMIT} hosted explanations. Come back tomorrow, or add your own OpenAI key in Settings for unlimited use.`,
     );
   }
 
@@ -163,7 +164,7 @@ app.post("/v1/follow-up", async (c) => {
     return jsonError(
       429,
       "QUOTA",
-      "You've used today's 20 free explanations. Come back tomorrow, or add your own OpenAI key in Settings for unlimited use.",
+      `You've used today's ${DAILY_EXPLAIN_LIMIT} hosted explanations. Come back tomorrow, or add your own OpenAI key in Settings for unlimited use.`,
     );
   }
 

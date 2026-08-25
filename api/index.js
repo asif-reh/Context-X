@@ -3338,6 +3338,14 @@ var cors = (options) => {
   };
 };
 
+// src/lib/limits.ts
+var DAILY_EXPLAIN_LIMIT = 500;
+var MAX_TERM_CHARS = 200;
+var MAX_CONTEXT_CHARS = 4e3;
+var MAX_TITLE_CHARS = 200;
+var MAX_URL_CHARS = 2e3;
+var MAX_QUESTION_CHARS = 500;
+
 // src/lib/explainPrompt.ts
 function buildExplainSystemPrompt(selectedText, surroundingContext) {
   const selected = selectedText.trim() || "(empty selection)";
@@ -3478,16 +3486,6 @@ async function pingOpenAi() {
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-
-// src/lib/limits.ts
-var DAILY_EXPLAIN_LIMIT = 20;
-var MAX_TERM_CHARS = 200;
-var MAX_CONTEXT_CHARS = 4e3;
-var MAX_TITLE_CHARS = 200;
-var MAX_URL_CHARS = 2e3;
-var MAX_QUESTION_CHARS = 500;
-
-// server/ratelimit.ts
 var dataDir = process.env.VERCEL ? "/tmp/context-x" : path.join(path.dirname(fileURLToPath(import.meta.url)), ".data");
 var quotaFile = path.join(dataDir, "quota.json");
 function utcDay(now = Date.now()) {
@@ -3724,7 +3722,7 @@ app.post("/v1/explain", async (c) => {
     return jsonError(
       429,
       "QUOTA",
-      "You've used today's 20 free explanations. Come back tomorrow, or add your own OpenAI key in Settings for unlimited use."
+      `You've used today's ${DAILY_EXPLAIN_LIMIT} hosted explanations. Come back tomorrow, or add your own OpenAI key in Settings for unlimited use.`
     );
   }
   try {
@@ -3768,7 +3766,7 @@ app.post("/v1/follow-up", async (c) => {
     return jsonError(
       429,
       "QUOTA",
-      "You've used today's 20 free explanations. Come back tomorrow, or add your own OpenAI key in Settings for unlimited use."
+      `You've used today's ${DAILY_EXPLAIN_LIMIT} hosted explanations. Come back tomorrow, or add your own OpenAI key in Settings for unlimited use.`
     );
   }
   try {
