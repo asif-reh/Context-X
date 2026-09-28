@@ -9,3 +9,4 @@ dist
 *.log
 server/.data
 context-x.zip
+.vercel
